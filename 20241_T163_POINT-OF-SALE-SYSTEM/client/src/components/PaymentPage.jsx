@@ -268,14 +268,13 @@ function PaymentPage() {
 
   return (
     <Layout
-  style={{
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)',
-    color: 'white',
-    padding: '24px',
-  }}
->
-
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+        color: 'white',
+        padding: '24px',
+      }}
+    >
       {/* Header */}
       <div
         style={{
@@ -286,18 +285,17 @@ function PaymentPage() {
         }}
       >
         <Button
-  type="text"
-  icon={<LeftOutlined />}
-  onClick={handleBack}
-  style={{
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: '16px',
-  }}
->
-  Back
-</Button>
-
+          type="text"
+          icon={<LeftOutlined />}
+          onClick={handleBack}
+          style={{
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '16px',
+          }}
+        >
+          Back
+        </Button>
         <div style={{ textAlign: 'center', flexGrow: 1 }}>
           <Typography.Title level={3} style={{ color: '#FFD700', margin: 0 }}>
             🛒 Enjoy Buying!
@@ -435,19 +433,18 @@ function PaymentPage() {
                 Reminder: Confirm your quantity and payment method before proceeding.
               </Typography.Text>
               <Button
-  type="primary"
-  block
-  size="large"
-  onClick={handlePaymentClick}
-  disabled={!paymentMethod}
-  style={{
-    background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
-    border: 'none',
-  }}
->
-  Pay ₱{product.price * quantity}
-</Button>
-
+                type="primary"
+                block
+                size="large"
+                onClick={handlePaymentClick}
+                disabled={!paymentMethod}
+                style={{
+                  backgroundColor: '#4b6cb7',
+                  borderColor: '#4b6cb7',
+                }}
+              >
+                Pay ₱{product.price * quantity}
+              </Button>
             </Card>
           </Col>
         </Row>
@@ -468,17 +465,16 @@ function PaymentPage() {
             Cancel
           </Button>,
           <Button
-          key="confirm"
-          type="primary"
-          onClick={handleConfirmPayment}
-          style={{
-            background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
-            border: 'none',
-          }}
-        >
-          Confirm
-        </Button>
-        ,
+            key="confirm"
+            type="primary"
+            onClick={handleConfirmPayment}
+            style={{
+              backgroundColor: '#4b6cb7',
+              borderColor: '#4b6cb7',
+            }}
+          >
+            Confirm
+          </Button>,
         ]}
       >
         <Typography.Text>

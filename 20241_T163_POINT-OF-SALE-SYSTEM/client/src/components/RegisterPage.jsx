@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import axios from "axios";
 import styles from './css/RegisterPage.module.css';
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import Google from "../images/google.png"; 
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -49,11 +48,13 @@ function RegisterPage() {
     const pin = formData.pin.join("");
     const confirmPin = formData.confirmPin.join("");
 
+    // Validate pin and confirm pin match
     if (pin !== confirmPin) {
       setError("Pins do not match. Please try again.");
       return;
     }
 
+    // Validate reCAPTCHA
     if (!recaptchaToken) {
       setError("Please complete the reCAPTCHA verification.");
       return;
@@ -71,12 +72,15 @@ function RegisterPage() {
       const response = await axios.post(`http://localhost:8000/api/register`, formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log("reCAPTCHA token (client):", recaptchaToken);
 
       setLoading(false);
       setMessage(response.data.message);
       setRecaptchaToken(null);
 
-      setTimeout(() => navigate("/login-selection"), 10000);
+      // Redirect after successful registration
+      setTimeout(() => navigate("/login-selection"), 10000); // 15 seconds delay
+
     } catch (error) {
       setLoading(false);
       setError(error.response?.data?.message || "Error during registration. Please try again.");
@@ -93,68 +97,19 @@ function RegisterPage() {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
-
   return (
-    <motion.div 
-      className={styles.pageWrapper}
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <motion.button 
-        className={styles.backBtn}
-        onClick={() => navigate("/")}
-        whileHover={{ scale: 1.05, x: -5 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <i className="fas fa-arrow-left"></i>
-        Back
-      </motion.button>
+    <div className={styles.pageWrapper}>
+      <button className={styles.backBtn} onClick={() => navigate("/")}>
+        &larr; Back
+      </button>
 
-      <motion.div 
-        className={styles.formWrapper}
-        variants={itemVariants}
-      >
+      <div className={styles.formWrapper}>
         <form onSubmit={handleSubmit} className={styles.form}>
-          <motion.h2 
-            className={styles.heading}
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            Register
-          </motion.h2>
+          <h2 className={styles.heading}>Register</h2>
 
-          <motion.div 
-            className={styles.inputGroup}
-            variants={containerVariants}
-          >
-            <motion.div 
-              className={styles.inputWrapper}
-              variants={itemVariants}
-            >
+          {/* Input Fields with Icons */}
+          <div className={styles.inputGroup}>
+            <div className={styles.inputWrapper}>
               <i className="fas fa-user"></i>
               <input
                 type="text"
@@ -165,11 +120,8 @@ function RegisterPage() {
                 placeholder="Firstname"
                 required
               />
-            </motion.div>
-            <motion.div 
-              className={styles.inputWrapper}
-              variants={itemVariants}
-            >
+            </div>
+            <div className={styles.inputWrapper}>
               <i className="fas fa-user"></i>
               <input
                 type="text"
@@ -180,11 +132,8 @@ function RegisterPage() {
                 placeholder="Lastname"
                 required
               />
-            </motion.div>
-            <motion.div 
-              className={styles.inputWrapper}
-              variants={itemVariants}
-            >
+            </div>
+            <div className={styles.inputWrapper}>
               <i className="fas fa-envelope"></i>
               <input
                 type="email"
@@ -195,131 +144,77 @@ function RegisterPage() {
                 placeholder="Email"
                 required
               />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <label className={styles.pinLabel}>Pin</label>
-            <div className={styles.pinGroup}>
-              {formData.pin.map((digit, index) => (
-                <motion.input
-                  key={index}
-                  type="password"
-                  name={index.toString()}
-                  value={digit}
-                  onChange={(e) => handleChange(e, "pin")}
-                  className={styles.pinInput}
-                  maxLength="1"
-                  inputMode="numeric"
-                  ref={pinRefs.current[index]}
-                  required
-                  whileFocus={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              ))}
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div variants={itemVariants}>
-            <label className={styles.pinLabel}>Confirm Pin</label>
-            <div className={styles.pinGroup}>
-              {formData.confirmPin.map((digit, index) => (
-                <motion.input
-                  key={index}
-                  type="password"
-                  name={index.toString()}
-                  value={digit}
-                  onChange={(e) => handleChange(e, "confirmPin")}
-                  className={styles.pinInput}
-                  maxLength="1"
-                  inputMode="numeric"
-                  ref={confirmPinRefs.current[index]}
-                  required
-                  whileFocus={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              ))}
-            </div>
-          </motion.div>
+          {/* Pin Inputs */}
+          <label className={styles.pinLabel}>Pin</label>
+          <div className={styles.pinGroup}>
+            {formData.pin.map((digit, index) => (
+              <input
+                key={index}
+                type="password"
+                name={index.toString()}
+                value={digit}
+                onChange={(e) => handleChange(e, "pin")}
+                className={styles.pinInput}
+                maxLength="1"
+                inputMode="numeric"
+                ref={pinRefs.current[index]}
+                required
+              />
+            ))}
+          </div>
 
-          <motion.div 
-            className={styles.recaptchaWrapper}
-            variants={itemVariants}
-          >
+          {/* Confirm Pin Inputs */}
+          <label className={styles.pinLabel}>Confirm Pin</label>
+          <div className={styles.pinGroup}>
+            {formData.confirmPin.map((digit, index) => (
+              <input
+                key={index}
+                type="password"
+                name={index.toString()}
+                value={digit}
+                onChange={(e) => handleChange(e, "confirmPin")}
+                className={styles.pinInput}
+                maxLength="1"
+                inputMode="numeric"
+                ref={confirmPinRefs.current[index]}
+                required
+              />
+            ))}
+          </div>
+
+          {/* reCAPTCHA */}
+          <div className={styles.recaptchaWrapper}>
             <ReCAPTCHA
               sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
               onChange={handleRecaptchaChange}
             />
-          </motion.div>
+          </div>
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                className={styles.errorMessage}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {message && (
-              <motion.div
-                className={styles.successMessage}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {message}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.button 
-            type="submit" 
-            className={styles.btn} 
-            disabled={loading}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
+          {/* Submit Button */}
+          <button type="submit" className={styles.btn} disabled={loading}>
             {loading ? "Registering..." : "Register"}
-          </motion.button>
+          </button>
 
-          <motion.div 
-            className={styles.googleAuth}
-            variants={itemVariants}
-          >
-            <motion.button
-              type="button"
-              className={styles.googleBtn}
-              onClick={googleAuth}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <motion.img 
-                src={Google} 
-                alt="Google" 
-                className={styles.googleIcon}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-              />
-              Continue with Google
-            </motion.button>
-          </motion.div>
+          {error && <p className={styles.errorMessage}>{error}</p>}
+          {message && <p className={styles.successMessage}>{message}</p>}
 
-          <motion.div 
-            className={styles.loginPrompt}
-            variants={itemVariants}
-          >
-            Already have an account?{" "}
-            <Link to="/login-selection">Login here</Link>
-          </motion.div>
+          {/* Google Auth */}
+          <div className={styles.googleAuth}>
+            <button className={styles.googleBtn} onClick={googleAuth}>
+              <img src={Google} alt="Google Icon" className={styles.googleIcon} />
+              <span>Sign in with Google</span>
+            </button>
+          </div>
+
+          <p className={styles.loginPrompt}>
+            Already have an account? <Link to="/login-selection">Login</Link>
+          </p>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 

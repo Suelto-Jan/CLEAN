@@ -10,11 +10,11 @@ import GoogleCallbackPage from './components/GoogleCallbackPage';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import ScanPage from './components/ScanPage';
-import PaymentPage from './components/PaymentPage';
-import ThankYou from './components/ThankYou';
-import EditProfile from './components/EditProfile';
+import PaymentPage from './components/PaymentPage'
+import ThankYou from './components/Thankyou.jsx';
+import EditProfile from './components/EditProfile.jsx';
 import './App.css';
-import ResetPinPage from './components/ResetPinPage';
+import ResetPinPage from './components/ResetPinPage.jsx';
 
 function App() {
 

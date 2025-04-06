@@ -11,28 +11,19 @@ import {
   IconButton,
   Tooltip,
   CssBaseline,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import { FaUsers, FaBox, FaChartLine } from "react-icons/fa";
-import { IoLogOut, IoMenu, IoClose } from "react-icons/io5";
-import { motion, AnimatePresence } from "framer-motion";
+import { IoLogOut } from "react-icons/io5";
 import UserList from "./Userlist";
 import ProductList from "./Productlist";
 import TotalSales from "./TotalSales";
 import AdminProfile from "./AdminProfile";
 import axios from "axios";
-import PersonIcon from "@mui/icons-material/Person";
-
-
 
 function Dashboard() {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const drawerWidth = 240;
 
   // Fetch admin data based on the current token in localStorage
@@ -75,281 +66,142 @@ function Dashboard() {
     navigate("/"); // Redirect to login page
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { x: -20, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
-
   const drawerContent = (
-    <motion.div
-      variants={containerVariants}
-      style={{
-        height: "100%",
+    <Box
+      sx={{
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
+        justifyContent: "space-between",
+        height: "100vh", // Full height of the viewport
+        background: "linear-gradient(135deg, #4b6cb7, #182848)",
         color: "white",
-        overflow: "hidden",
+        paddingTop: 3,
+        paddingBottom: 3,
       }}
     >
+      {/* Admin Profile */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          padding: "20px",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <Avatar
-            src={admin?.image}
-            alt={admin?.firstname}
-            sx={{
-              width: 50,
-              height: 50,
-              border: "2px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            }}
-          />
-          <Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: "600",
-                fontSize: "1.1rem",
-                marginBottom: "2px",
-              }}
-            >
-              {admin?.firstname} {admin?.lastname}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                opacity: 0.8,
-                fontSize: "0.85rem",
-              }}
-            >
-              Administrator
-            </Typography>
-          </Box>
-        </motion.div>
-      </Box>
-
-      <Box
-        sx={{
-          flex: 1,
           display: "flex",
           flexDirection: "column",
-          padding: "20px",
-          gap: "10px",
+          alignItems: "center",
+          mb: 3,
         }}
+        component={Link}
+        to="/admin-profile"
+        style={{ textDecoration: "none" }}
       >
-        <motion.div
-          variants={itemVariants}
-          style={{
+        <Avatar
+  alt="Admin Profile"
+  src={`http://localhost:8000/${admin?.image || "default-avatar.png"}`}
+  sx={{
+    width: 90,
+    height: 90,
+    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+    border: "2px solid white",
+  }}
+/>
+
+<Typography variant="h6" sx={{ mt: 1, color: "white", fontWeight: "bold", textAlign: "center" }}>
+  {admin?.firstname || "No Name"} {/* Ensure this is pulling the correct field */}
+</Typography>
+
+      </Box>
+
+      <Divider sx={{ backgroundColor: "rgba(255,255,255,0.3)" }} />
+
+      {/* Navigation Links */}
+      <List sx={{ mt: 2 }}>
+        <ListItem
+          button
+          component={Link}
+          to="/user-list"
+          sx={{
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            alignItems: "center",
+            color: "white",
+            padding: "12px",
+            marginBottom: 2,
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "rgba(255,255,255,0.2)", // Only change background color on hover
+            },
           }}
         >
-          <ListItem
-            button
-            component={Link}
-            to="/admin-profile"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "white",
-              padding: "12px",
-              marginBottom: "16px",
-              borderRadius: "8px",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-                transform: "translateX(5px)",
-              },
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 40,
-                height: 40,
-                backgroundColor: "rgba(255,255,255,0.1)",
-                marginBottom: "8px",
-              }}
-            >
-              <PersonIcon />
-            </Avatar>
-            <Typography variant="body1" sx={{ marginTop: "8px" }}>
-              Profile
-            </Typography>
-          </ListItem>
-
-          <ListItem
-            button
-            component={Link}
-            to="/user-list"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "white",
-              padding: "12px",
-              marginBottom: "16px",
-              borderRadius: "8px",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-                transform: "translateX(5px)",
-              },
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 40,
-                height: 40,
-                backgroundColor: "rgba(255,255,255,0.1)",
-                marginBottom: "8px",
-              }}
-            >
-              <FaUsers />
-            </Avatar>
-            <Typography variant="body1" sx={{ marginTop: "8px" }}>
-              Users
-            </Typography>
-          </ListItem>
-
-          <ListItem
-            button
-            component={Link}
-            to="/product-list"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "white",
-              padding: "12px",
-              marginBottom: "16px",
-              borderRadius: "8px",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-                transform: "translateX(5px)",
-              },
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 40,
-                height: 40,
-                backgroundColor: "rgba(255,255,255,0.1)",
-                marginBottom: "8px",
-              }}
-            >
-              <FaBox />
-            </Avatar>
-            <Typography variant="body1" sx={{ marginTop: "8px" }}>
-              Products
-            </Typography>
-          </ListItem>
-
-          <ListItem
-            button
-            component={Link}
-            to="/total-sales"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "white",
-              padding: "12px",
-              marginBottom: "16px",
-              borderRadius: "8px",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.2)",
-                transform: "translateX(5px)",
-              },
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 40,
-                height: 40,
-                backgroundColor: "rgba(255,255,255,0.1)",
-                marginBottom: "8px",
-              }}
-            >
-              <FaChartLine />
-            </Avatar>
-            <Typography variant="body1" sx={{ marginTop: "8px" }}>
-              Sales
-            </Typography>
-          </ListItem>
-        </motion.div>
-      </Box>
-
-      <Box sx={{ padding: "16px" }}>
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          <FaUsers size={40} />
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Users
+          </Typography>
+        </ListItem>
+        <ListItem
+          button
+          component={Link}
+          to="/product-list"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            color: "white",
+            padding: "12px",
+            marginBottom: 2,
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "rgba(255,255,255,0.2)", // Only change background color on hover
+            },
+          }}
         >
-          <Tooltip title="Logout">
-            <IconButton
-              onClick={handleLogout}
-              sx={{
-                backgroundColor: "rgba(255,0,0,0.8)",
-                color: "white",
-                width: "100%",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  backgroundColor: "rgba(255,0,0,1)",
-                  transform: "translateY(-2px)",
-                },
-                padding: "16px",
-                borderRadius: "10px",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-              }}
-            >
-              <IoLogOut />
-            </IconButton>
-          </Tooltip>
-        </motion.div>
+          <FaBox size={40} />
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Products
+          </Typography>
+        </ListItem>
+        <ListItem
+          button
+          component={Link}
+          to="/total-sales"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            color: "white",
+            padding: "12px",
+            marginBottom: 2,
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "rgba(255,255,255,0.2)", // Only change background color on hover
+            },
+          }}
+        >
+          <FaChartLine size={40} />
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Sales
+          </Typography>
+        </ListItem>
+      </List>
+
+      {/* Logout Button */}
+      <Box sx={{ p: 2 }}>
+        <Tooltip title="Logout">
+          <IconButton
+            onClick={handleLogout}
+            sx={{
+              backgroundColor: "rgba(255,0,0,0.8)",
+              color: "white",
+              width: "100%",
+              "&:hover": {
+                backgroundColor: "rgba(255,0,0,1)",
+              },
+              padding: "16px",
+              borderRadius: "10px",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+            }}
+          >
+            <IoLogOut />
+          </IconButton>
+        </Tooltip>
       </Box>
-    </motion.div>
+    </Box>
   );
 
   if (loading) {
@@ -357,92 +209,43 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <CssBaseline />
-      
-      {/* Mobile App Bar */}
-      {isMobile && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1200,
-            bgcolor: "white",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            display: "flex",
-            alignItems: "center",
-            padding: "8px 16px",
-          }}
-        >
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
-            {mobileOpen ? <IoClose /> : <IoMenu />}
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Admin Dashboard
-          </Typography>
-        </Box>
-      )}
 
-      {/* Drawer */}
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      {/* Sidebar */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+            zIndex: 10, // Ensures sidebar is clickable
+          },
+        }}
+        open
       >
-        <AnimatePresence>
-          {(mobileOpen || !isMobile) && (
-            <motion.div
-              initial={{ x: -drawerWidth }}
-              animate={{ x: 0 }}
-              exit={{ x: -drawerWidth }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <Drawer
-                variant={isMobile ? "temporary" : "permanent"}
-                open={mobileOpen || !isMobile}
-                onClose={handleDrawerToggle}
-                ModalProps={{
-                  keepMounted: true,
-                }}
-                sx={{
-                  display: { xs: "block", sm: "block" },
-                  "& .MuiDrawer-paper": {
-                    boxSizing: "border-box",
-                    width: drawerWidth,
-                    border: "none",
-                  },
-                }}
-              >
-                {drawerContent}
-              </Drawer>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Box>
+        {drawerContent}
+      </Drawer>
 
       {/* Main Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          marginTop: isMobile ? "64px" : 0,
+          p: 4,
+          ml: 0, // Removes extra spacing caused by sidebar
+          width: `calc(100% - ${drawerWidth}px)`, // Deduct sidebar width
+          backgroundColor: "#f9f9f9",
+          borderRadius: "10px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         <Routes>
-          <Route path="/" element={<UserList />} />
+          <Route path="/admin-profile" element={<AdminProfile />} />
+          <Route path="/user-list" element={<UserList />} />
           <Route path="/product-list" element={<ProductList />} />
           <Route path="/total-sales" element={<TotalSales />} />
-          <Route path="/admin-profile" element={<AdminProfile />} />
-          
         </Routes>
       </Box>
     </Box>

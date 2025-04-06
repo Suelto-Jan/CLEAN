@@ -31,6 +31,14 @@ const productSchema = new mongoose.Schema(
       maxlength: 20,
       index: true, // Add index for quicker lookups
     },
+    lockedBy: { 
+      type: String, 
+      default: null 
+    },
+    lockedUntil: { 
+      type: Date, 
+      default: null // Keeps it as null by default
+    },
     sku: { 
       type: String, 
       unique: true },

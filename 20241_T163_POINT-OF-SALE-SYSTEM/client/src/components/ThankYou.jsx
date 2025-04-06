@@ -1,35 +1,13 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Box,
-  Button,
-  Typography,
-  IconButton,
-  Card,
-  CardContent,
-  Divider,
-  Grid,
-  useTheme,
-  useMediaQuery,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import {
-  CheckCircle,
-  Home,
-  Logout,
-  ShoppingCart,
-} from '@mui/icons-material';
-import axios from 'axios';
-import bsuLogo from '../images/BSU LOGO.png';
-import cotLogo from '../images/COT.png';
+import { Card, Button, Typography, Divider, Row, Col, Space } from 'antd';
+import { LogoutOutlined, HomeOutlined, CheckCircleOutlined } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
 
 function ThankYou() {
   const location = useLocation();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const baseURL = 'http://localhost:8000';
   // Retrieve purchase details from location.state or fallback to localStorage
@@ -59,342 +37,195 @@ function ThankYou() {
     navigate('/login-selection'); // Redirect to login page
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
-
   // If no valid data is found, show the error
   if (!product || !user) {
     return (
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
+      <div
         style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
-          padding: "20px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
+          color: 'white',
+          textAlign: 'center',
+          position: 'relative', // For absolute positioning of the logout button
+          padding: '0 24px', // Padding to prevent overflow
         }}
       >
-        <motion.div variants={itemVariants}>
-          <Card
-            sx={{
-              maxWidth: 400,
-              textAlign: "center",
-              borderRadius: "24px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-              background: "rgba(255, 255, 255, 0.95)",
-              backdropFilter: "blur(10px)",
-              padding: "24px",
+        <Card
+          style={{
+            maxWidth: 400,
+            textAlign: 'center',
+            borderRadius: '15px',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+            background: '#ecf0f1',
+            padding: '24px',
+          }}
+        >
+          <Title level={2} style={{ color: '#e74c3c' }}>
+            Error
+          </Title>
+          <Text style={{ color: '#7f8c8d' }}>No purchase details found.</Text>
+          <Divider />
+          <Button
+            type="primary"
+            icon={<HomeOutlined />}
+            onClick={() => navigate('/')}
+            style={{
+              background: '#16a085',
+              borderColor: '#16a085',
+              padding: '8px 20px',
+              fontSize: '16px',
             }}
           >
-            <Typography
-              variant="h4"
-              sx={{
-                color: "#e74c3c",
-                fontWeight: "600",
-                mb: 2,
-              }}
-            >
-              Error
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-              No purchase details found.
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Button
-              variant="contained"
-              startIcon={<Home />}
-              onClick={() => navigate('/')}
-              sx={{
-                background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                "&:hover": {
-                  background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
-                },
-                borderRadius: "12px",
-                textTransform: "none",
-                padding: "12px 24px",
-              }}
-            >
-              Go Back Home
-            </Button>
-          </Card>
-        </motion.div>
-      </motion.div>
+            Go Back Home
+          </Button>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
+    <div
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
-        padding: "20px",
-        position: "relative",
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
+        color: 'white',
+        padding: '24px',
+        position: 'relative',
+        overflow: 'hidden', // Prevents scrolling
       }}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <IconButton
-        onClick={handleLogout}
-        sx={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          color: "#f44336",
-          backgroundColor: "rgba(244, 67, 54, 0.1)",
-          "&:hover": {
-            backgroundColor: "rgba(244, 67, 54, 0.2)",
-          },
-        }}
-      >
-        <Logout />
-      </IconButton>
-
-      <motion.div
-        variants={itemVariants}
+      <Button
+        type="text"
         style={{
-          maxWidth: "800px",
-          margin: "0 auto",
-          padding: isMobile ? "20px" : "40px",
+          color: '#f44336',
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          fontSize: '18px',
+        }}
+        icon={<LogoutOutlined />}
+        onClick={handleLogout}
+      >
+        Logout
+      </Button>
+
+      <Card
+        style={{
+          maxWidth: 600,
+          width: '100%',
+          borderRadius: '20px',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          paddingBottom: '16px',
+          overflow: 'hidden',
+          padding: '24px',
         }}
       >
-        <Card
-          sx={{
-            borderRadius: "24px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(10px)",
-            overflow: "hidden",
-          }}
-        >
-          <CardContent sx={{ p: 4 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                mb: 4,
-              }}
-            >
-              <motion.img
-                src={bsuLogo}
-                alt="BSU Logo"
-                style={{ height: "80px", marginRight: "20px" }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.img
-                src={cotLogo}
-                alt="COT Logo"
-                style={{ height: "80px" }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-              />
-            </Box>
+        <Space direction="vertical" style={{ width: '100%', textAlign: 'center' }}>
+          <CheckCircleOutlined
+            style={{
+              fontSize: '64px',
+              color: '#2ecc71',
+              marginBottom: '16px',
+            }}
+          />
+          <Title level={2} style={{ color: '#4b6cb7' }}>
+            Thank You for Your Purchase!
+          </Title>
+          <Text style={{ fontSize: '16px', color: '#7f8c8d' }}>
+            Your transaction was successful.
+          </Text>
+        </Space>
+        <Divider style={{ borderColor: '#bdc3c7' }} />
+        <Title level={4} style={{ textAlign: 'center', color: '#4b6cb7' }}>
+          Receipt
+        </Title>
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                mb: 4,
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", duration: 0.5 }}
-              >
-                <CheckCircle
-                  sx={{
-                    fontSize: 80,
-                    color: "#2ecc71",
-                    mb: 2,
-                  }}
-                />
-              </motion.div>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: "600",
-                  background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  mb: 1,
-                }}
-              >
-                Thank You for Your Purchase!
-              </Typography>
-              <Typography color="text.secondary" sx={{ mb: 3 }}>
-                Your transaction was successful.
-              </Typography>
-            </Box>
+        {/* Product Image Section */}
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <img
+            src={`${baseURL}/${product.image?.replace(/\\/g, '/')}`}
+            alt={product.name}
+            style={{
+              width: '100%',
+              maxWidth: '180px', // Reduced image size to fit better
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            }}
+          />
+        </div>
 
-            <Divider sx={{ my: 3 }} />
-
-            <Typography
-              variant="h5"
-              sx={{
-                textAlign: "center",
-                fontWeight: "600",
-                color: "#1a2a6c",
-                mb: 3,
-              }}
-            >
-              Receipt
-            </Typography>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                mb: 3,
-              }}
-            >
-              <motion.img
-                src={`${baseURL}/${product.image?.replace(/\\/g, '/')}`}
-                alt={product.name}
-                style={{
-                  width: "100%",
-                  maxWidth: "200px",
-                  objectFit: "contain",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              />
-            </Box>
-
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Purchased By:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">
-                  {user.firstname} {user.lastname}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Product:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">{product.name}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Quantity:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">{quantity}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Price:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">
-                  ₱{product.price.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Total Price:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">
-                  ₱{totalPrice.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Payment Method:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">{paymentMethod}</Typography>
-              </Grid>
-            </Grid>
-
-            <Divider sx={{ my: 3 }} />
-
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Typography
-                variant="body1"
-                sx={{ fontStyle: "italic", color: "text.secondary" }}
-              >
-                We hope to see you again!
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<ShoppingCart />}
-                onClick={() => navigate('/scan')}
-                sx={{
-                  background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                  "&:hover": {
-                    background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
-                  },
-                  borderRadius: "12px",
-                  textTransform: "none",
-                  padding: "12px 24px",
-                }}
-              >
-                Scan Another Product
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+          <Col span={12}>
+            <Text strong>Purchased By:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>
+              {user.firstname} {user.lastname}
+            </Text>
+          </Col>
+          <Col span={12}>
+            <Text strong>Product:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>{product.name}</Text>
+          </Col>
+          <Col span={12}>
+            <Text strong>Quantity:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>{quantity}</Text>
+          </Col>
+          <Col span={12}>
+            <Text strong>Price:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>₱{product.price.toFixed(2)}</Text>
+          </Col>
+          <Col span={12}>
+            <Text strong>Total Price:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>₱{totalPrice.toFixed(2)}</Text>
+          </Col>
+          <Col span={12}>
+            <Text strong>Payment Method:</Text>
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Text style={{ color: '#7f8c8d' }}>{paymentMethod}</Text>
+          </Col>
+        </Row>
+        <Divider style={{ borderColor: '#bdc3c7' }} />
+        <Space direction="vertical" style={{ width: '100%', textAlign: 'center' }}>
+          <Text style={{ fontStyle: 'italic', color: '#7f8c8d' }}>
+            We hope to see you again!
+          </Text>
+          <Button
+            type="primary"
+            style={{
+              background: '#4b6cb7',
+              borderColor: '#4b6cb7',
+              padding: '10px 20px',
+              fontSize: '16px',
+            }}
+            onClick={() => navigate('/scan')}
+          >
+            Scan Another Product
+          </Button>
+        </Space>
+      </Card>
+    </div>
   );
 }
 

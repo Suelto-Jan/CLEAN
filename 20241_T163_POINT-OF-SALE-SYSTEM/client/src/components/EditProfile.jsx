@@ -1,29 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Avatar,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import {
-  PhotoCamera,
-  Save,
-  ArrowBack,
-  Email,
-  Lock,
-  Person,
-} from '@mui/icons-material';
+import styles from './css/EditProfile.module.css';
 
 function EditProfile() {
   const [user, setUser] = useState({
@@ -37,10 +15,7 @@ function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -91,12 +66,12 @@ function EditProfile() {
     event.preventDefault();
     setError('');
     setSuccess('');
-    setSaving(true);
+    setLoading(true);
 
     const token = localStorage.getItem('token');
     if (!token) {
       setError('You are not logged in. Please log in and try again.');
-      setSaving(false);
+      setLoading(false);
       return;
     }
 
@@ -123,7 +98,7 @@ function EditProfile() {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
@@ -131,287 +106,114 @@ function EditProfile() {
     navigate(-1);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
-
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
-        padding: "20px",
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%)",
-          pointerEvents: "none",
-        }}
-      />
+    <div className={styles.editProfile}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <button onClick={handleBack} className={styles.backButton}>
+            &larr; Back
+          </button>
+          <h2>Edit Profile</h2>
+        </div>
 
-      <Box
-        sx={{
-          position: "relative",
-          maxWidth: "800px",
-          margin: "0 auto",
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
-          borderRadius: "24px",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-          backdropFilter: "blur(10px)",
-          overflow: "hidden",
-          padding: isMobile ? "20px" : "40px",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "30px",
-          }}
-        >
-          <IconButton
-            onClick={handleBack}
-            sx={{
-              marginRight: "16px",
-              color: "#1a2a6c",
-              "&:hover": {
-                backgroundColor: "rgba(26, 42, 108, 0.1)",
-              },
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: "600",
-              background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Edit Profile
-          </Typography>
-        </Box>
+        {loading && <p className={styles.loading}>Loading...</p>}
+        {error && <p className={styles.error}>{error}</p>}
+        {success && <p className={styles.success}>{success}</p>}
 
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "400px",
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <motion.form
-            variants={itemVariants}
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "16px",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "relative",
-                  width: "120px",
-                  height: "120px",
-                }}
-              >
-                <Avatar
-                  src={previewImage}
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    border: "4px solid #1a2a6c",
-                  }}
-                />
-                <Tooltip title="Change Photo">
-                  <IconButton
-                    component="label"
-                    sx={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: 0,
-                      backgroundColor: "#1a2a6c",
-                      color: "white",
-                      "&:hover": {
-                        backgroundColor: "#b21f1f",
-                      },
-                    }}
-                  >
+        {!loading && (
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <div className={styles.profileImageSection}>
+              <label htmlFor="profileImage" className={styles.label}>
+                Profile Image
+              </label>
+              <div className={styles.imagePreview}>
+                {previewImage ? (
+                  <img src={previewImage} alt="Profile" />
+                ) : (
+                  <div className={styles.placeholder}>No Image</div>
+                )}
+              </div>
               <input
                 type="file"
-                      hidden
+                id="profileImage"
                 accept="image/*"
                 onChange={handleImageChange}
-                    />
-                    <PhotoCamera />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
+                className={styles.fileInput}
+              />
+            </div>
 
-            <TextField
-              label="First Name"
+            <div className={styles.inputGroup}>
+              <label htmlFor="firstname" className={styles.label}>
+                First Name
+              </label>
+              <input
+                type="text"
+                id="firstname"
                 name="firstname"
                 value={user.firstname}
                 onChange={handleInputChange}
-              fullWidth
-              InputProps={{
-                startAdornment: <Person sx={{ color: "#1a2a6c", mr: 1 }} />,
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                },
-              }}
-            />
+              />
+            </div>
 
-            <TextField
-              label="Last Name"
+            <div className={styles.inputGroup}>
+              <label htmlFor="lastname" className={styles.label}>
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="lastname"
                 name="lastname"
                 value={user.lastname}
                 onChange={handleInputChange}
-              fullWidth
-              InputProps={{
-                startAdornment: <Person sx={{ color: "#1a2a6c", mr: 1 }} />,
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                },
-              }}
-            />
+              />
+            </div>
 
-            <TextField
-              label="Email"
+            <div className={styles.inputGroup}>
+              <label htmlFor="email" className={styles.label}>
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
                 name="email"
                 value={user.email}
-              fullWidth
-              InputProps={{
-                startAdornment: <Email sx={{ color: "#1a2a6c", mr: 1 }} />,
-                readOnly: true,
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                },
-              }}
-            />
+                readOnly
+              />
+            </div>
 
-            <TextField
-              label="New PIN (optional)"
-              name="pin"
+            <div className={styles.inputGroup}>
+  <label htmlFor="pin" className={styles.label}>
+    New PIN
+  </label>
+  <input
     type="password"
+    id="pin"
+    name="pin"
     value={pin}
     onChange={(e) => {
       const value = e.target.value;
       if (/^\d*$/.test(value) && value.length <= 6) { 
+        // Allow only numbers and limit to 6 digits
         setPin(value);
       }
     }}
-              fullWidth
-              InputProps={{
-                startAdornment: <Lock sx={{ color: "#1a2a6c", mr: 1 }} />,
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                },
-              }}
-              inputProps={{
-                maxLength: 6,
-                pattern: "[0-9]*",
-                inputMode: "numeric",
-              }}
-            />
+    onBlur={(e) => {
+      if (e.target.value.length < 6) {
+        alert("PIN must be at least 6 digits long."); // Validation for minimum length
+      }
+    }}
+    maxLength={6} // Ensures maximum length is 6
+    inputMode="numeric" // Displays numeric keyboard on mobile devices
+  />
+</div>
 
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <Alert severity="error" sx={{ borderRadius: "12px" }}>
-                    {error}
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {success && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <Alert severity="success" sx={{ borderRadius: "12px" }}>
-                    {success}
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={saving}
-              startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-              sx={{
-                padding: "12px 24px",
-                borderRadius: "12px",
-                textTransform: "none",
-                background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                "&:hover": {
-                  background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
-                },
-              }}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </motion.form>
+            <button type="submit" className={styles.submitButton}>
+              Save Changes
+            </button>
+          </form>
         )}
-      </Box>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 

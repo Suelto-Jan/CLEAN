@@ -112,25 +112,16 @@ export const getProductbyId = async (req, res) => {
 // Get product by barcode
 export const getProductByBarcode = async (req, res) => {
   try {
-    const barcode = req.params.barcode.trim();
-    console.log('Searching product with barcode:', barcode);
-
+    const { barcode } = req.params;
     const product = await Product.findOne({ barcode });
-
     if (!product) {
-      console.log('No product found for barcode:', barcode);
-      return res.status(404).json({ message: 'Product not found!' });
+      return res.status(404).json({ message: 'Product not found for the given barcode.' });
     }
-
-    console.log('Product retrieved successfully:', product);
     res.status(200).json(product);
   } catch (error) {
-    console.error('Error fetching product:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Error fetching product by barcode: ${error.message}` });
   }
 };
-
-
 
 // Update product by ID
 // Assuming the model file is named this way
@@ -138,16 +129,41 @@ export const getProductByBarcode = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
+    const adminId = req.body.adminId; // Admin making the request
+    const lockDuration = 5 * 60 * 1000; // Lock for 5 minutes
 
-    // Check if the product exists
+    // Find the product
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    // Prepare the updated data
+    // Debugging: Log the product's lock status
+    console.log('Product Lock Status:', product.lockedBy, product.lockedUntil);
+
+    // Check if the product is locked
+    if (product.lockedUntil && new Date(product.lockedUntil) > new Date()) {
+      // If locked, check if the admin trying to update is the one who locked it
+      if (product.lockedBy !== adminId) {
+        return res.status(403).json({
+          message: `Product is currently locked by another admin until ${new Date(
+            product.lockedUntil
+          ).toLocaleTimeString()}. Please try again later.`,
+        });
+      }
+    }
+
+    // Lock the product (if not already locked or the admin who locked it is updating)
+    product.lockedBy = adminId;
+    product.lockedUntil = new Date(Date.now() + lockDuration); // Set lock expiration time
+    await product.save();
+
+    // Update product data
     const updatedProductData = { ...req.body };
     if (req.file) {
       updatedProductData.image = path.join('products', req.file.filename); // Update image path
     }
+
+    // Debugging: Log the updated product data
+    console.log('Updated Product Data:', updatedProductData);
 
     // Update the product
     const updatedProduct = await Product.findByIdAndUpdate(productId, updatedProductData, {
@@ -155,6 +171,11 @@ export const updateProduct = async (req, res) => {
     });
 
     if (!updatedProduct) return res.status(404).json({ message: 'Failed to update product.' });
+
+    // Unlock the product after update
+    updatedProduct.lockedBy = null; // Remove the lock after the update
+    updatedProduct.lockedUntil = null; // Set lockedUntil back to null
+    await updatedProduct.save();
 
     res.status(200).json({
       message: 'Product updated successfully!',
