@@ -547,6 +547,7 @@ function ProductList() {
                   >
                     <MenuItem value="drinks">Drinks</MenuItem>
                     <MenuItem value="junkfood">Junk Food</MenuItem>
+                    <MenuItem value="others">Others</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

@@ -438,7 +438,7 @@ function Dashboard() {
         }}
       >
         <Routes>
-          <Route path="/" element={<UserList />} />
+          <Route path="/user-list" element={<UserList />} />
           <Route path="/product-list" element={<ProductList />} />
           <Route path="/total-sales" element={<TotalSales />} />
           <Route path="/admin-profile" element={<AdminProfile />} />

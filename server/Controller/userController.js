@@ -65,6 +65,16 @@ export const registerUser = async (req, res) => {
     });
   }
 
+  // Restrict email to buksu.edu.ph or student.buksu.edu.ph domains only
+  const allowedDomains = ["buksu.edu.ph", "student.buksu.edu.ph"];
+  const emailDomain = email.split("@")[1];
+
+  if (!allowedDomains.includes(emailDomain)) {
+    return res.status(400).json({
+      message: "Only emails from buksu.edu.ph or student.buksu.edu.ph are allowed.",
+    });
+  }
+
   const session = await UserModel.startSession();
   try {
     session.startTransaction();
@@ -124,7 +134,6 @@ export const registerUser = async (req, res) => {
       await sendVerificationEmail(email, verificationToken);
     } catch (emailError) {
       console.error("Failed to send verification email:", emailError);
-      // Don't throw; allow the user to proceed with manual verification
     }
 
     res.status(201).json({ message: "User registered successfully! Please verify your email." });
@@ -140,9 +149,6 @@ export const registerUser = async (req, res) => {
     session.endSession();
   }
 };
-
-
-
 
 
 // Email Verification

@@ -10,15 +10,13 @@ import GoogleCallbackPage from './components/GoogleCallbackPage';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import ScanPage from './components/ScanPage';
-import PaymentPage from './components/PaymentPage'
-import ThankYou from './components/Thankyou.jsx';
-import EditProfile from './components/EditProfile.jsx';
+import PaymentPage from './components/PaymentPage';
+import ThankYou from './components/ThankYou';
+import EditProfile from './components/EditProfile';
 import './App.css';
-import ResetPinPage from './components/ResetPinPage.jsx';
+import ResetPinPage from './components/ResetPinPage';
 
 function App() {
-
-
   // Show loading message until the user data is fetched
 
   // Theme configuration for Material-UI

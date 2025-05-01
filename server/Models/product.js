@@ -21,7 +21,7 @@ const productSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['drinks', 'junkfood'],  // Only these categories are allowed
+      enum: ['drinks', 'junkfood','others'],  // Only these categories are allowed
       required: true
     },
     barcode: {

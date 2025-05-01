@@ -48,34 +48,43 @@ function RegisterPage() {
     e.preventDefault();
     const pin = formData.pin.join("");
     const confirmPin = formData.confirmPin.join("");
-
+  
     if (pin !== confirmPin) {
       setError("Pins do not match. Please try again.");
       return;
     }
-
+  
+    // Email domain restriction
+    const allowedDomains = ["buksu.edu.ph", "student.buksu.edu.ph"];
+    const emailDomain = formData.email.split("@")[1];
+  
+    if (!allowedDomains.includes(emailDomain)) {
+      setError("Only emails from buksu.edu.ph or student.buksu.edu.ph are allowed.");
+      return;
+    }
+  
     if (!recaptchaToken) {
       setError("Please complete the reCAPTCHA verification.");
       return;
     }
-
+  
     const formDataToSend = new FormData();
     formDataToSend.append('firstname', formData.firstname);
     formDataToSend.append('lastname', formData.lastname);
     formDataToSend.append('email', formData.email);
     formDataToSend.append('pin', pin);
     formDataToSend.append('recaptchaToken', recaptchaToken);
-
+  
     try {
       setLoading(true);
       const response = await axios.post(`http://localhost:8000/api/register`, formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
+  
       setLoading(false);
       setMessage(response.data.message);
       setRecaptchaToken(null);
-
+  
       setTimeout(() => navigate("/login-selection"), 10000);
     } catch (error) {
       setLoading(false);
@@ -83,6 +92,7 @@ function RegisterPage() {
       setRecaptchaToken(null);
     }
   };
+  
 
   const googleAuth = () => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
