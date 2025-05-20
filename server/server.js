@@ -24,16 +24,48 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 connectDB();
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3454;
+
+// More flexible CORS configuration with function to check origin
+const whitelist = [
+    process.env.CLIENT_URL,
+    'https://clean-pos-frontend.onrender.com',
+    'https://682c1cff30ac40008cef192-aquamarine-khapse-67e0d4.netlify.app',
+    'https://aquamarine-khapse-67e0d4.netlify.app',
+    'http://localhost:3000'  // Always allow localhost:3000
+];
 
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? [
-            process.env.CLIENT_URL,
-            'https://clean-pos-frontend.onrender.com',
-            'https://682c1cff30ac40008cef192-aquamarine-khapse-67e0d4.netlify.app'
-          ]
-        : 'http://localhost:3000',
+    origin: function (origin, callback) {
+        console.log('Request origin:', origin);
+
+        // Allow requests with no origin (like mobile apps, curl requests)
+        if (!origin) {
+            console.log('Allowing request with no origin');
+            return callback(null, true);
+        }
+
+        // Check if origin is in whitelist
+        if (whitelist.indexOf(origin) !== -1) {
+            console.log('Origin in whitelist:', origin);
+            return callback(null, true);
+        }
+
+        // Allow all Netlify domains
+        if (origin && origin.endsWith('.netlify.app')) {
+            console.log('Allowing Netlify domain:', origin);
+            return callback(null, true);
+        }
+
+        // Allow localhost in development (any port)
+        if (origin && origin.includes('localhost')) {
+            console.log('Allowing localhost:', origin);
+            return callback(null, true);
+        }
+
+        console.log('Blocking origin by CORS:', origin);
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -83,8 +115,25 @@ app.use('/api/', receipt);
 
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send({ message: "Server error. Please try again later." });
+    console.error('Server error:', err.stack);
+
+    // Check if the error is a CORS error
+    if (err.message && err.message.includes('CORS')) {
+        console.error('CORS Error:', err.message);
+        return res.status(403).json({
+            message: "CORS error: Origin not allowed",
+            error: err.message
+        });
+    }
+
+    // For other errors, send a generic message
+    res.status(500).json({
+        message: "Server error. Please try again later.",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+
+    // Continue to other error handlers if any
+    if (next) next(err);
 });
 
 app.listen(port, () => {
