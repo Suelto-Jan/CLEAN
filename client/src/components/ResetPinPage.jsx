@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './css/ResetPinPage.module.css'; // Assume your styles are in this CSS file.
+import config from '../config';
 
 const ResetPinPage = () => {
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,7 @@ const ResetPinPage = () => {
       setLoading(true);
       setError(null); // Reset error state on a new request
 
-      const res = await fetch('http://localhost:8000/api/reset-pin/:token', {
+      const res = await fetch(`${config.apiUrl}/api/reset-pin/:token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPin: '123456' }),

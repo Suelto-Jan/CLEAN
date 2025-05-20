@@ -14,7 +14,7 @@ const sendVerificationEmail = (email, token) => {
         from: '2201102887@student.buksu.edu.ph',  // Replace with your email
         to: email,
         subject: 'Please verify your email',
-        text: `Click the link to verify your email: http://localhost:8000/verify-email?token=${token}`,
+        text: `Click the link to verify your email: https://clean-u8gn.onrender.com/verify-email?token=${token}`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
