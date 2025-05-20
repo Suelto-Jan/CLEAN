@@ -34,12 +34,15 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     if (token) {
+      console.log('Verifying token with API:', `${config.apiUrl}/api/verify-email?token=${token}`);
       axios.get(`${config.apiUrl}/api/verify-email?token=${token}`)
         .then(response => {
+          console.log('Verification successful:', response.data);
           setMessage(response.data.message);
           setError(null);
         })
         .catch(error => {
+          console.error('Verification error:', error);
           const errorMessage = error.response?.data?.message || 'Unknown error';
           if (errorMessage.includes('expired')) {
             setError('The verification link has expired. Please request a new one.');

@@ -43,8 +43,8 @@ const transporter = nodemailer.createTransport({
 
 // Send verification email
 export const sendVerificationEmail = (email, verificationToken) => {
-  // Use the API_URL instead of CLIENT_URL to ensure the backend handles the verification
-  const verificationUrl = `${process.env.CLIENT_URL}/api/verify-email?token=${verificationToken}`;
+  // Use the CLIENT_URL for the frontend page, which will call the API endpoint
+  const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,

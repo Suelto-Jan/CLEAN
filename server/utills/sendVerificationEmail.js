@@ -1,27 +1,36 @@
 // utils/sendVerificationEmail.js
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const sendVerificationEmail = (email, token) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: '2201102887@student.buksu.edu.ph',  // Replace with your email
-            pass: 'oxuc bckp orwk cpqd',  // Replace with your app-specific password or password
+            user: process.env.EMAIL_USER || '2201102887@student.buksu.edu.ph',
+            pass: process.env.EMAIL_PASS || 'dmkp vpck zata dfqg',
         },
+        tls: {
+            rejectUnauthorized: false
+        }
     });
 
+    // Use CLIENT_URL for the frontend verification page
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
     const mailOptions = {
-        from: '2201102887@student.buksu.edu.ph',  // Replace with your email
+        from: process.env.EMAIL_USER || '2201102887@student.buksu.edu.ph',
         to: email,
         subject: 'Please verify your email',
-        text: `Click the link to verify your email: https://clean-u8gn.onrender.com/verify-email?token=${token}`,
+        text: `Click the link to verify your email: ${verificationUrl}`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.log(error);
+            console.error('Error sending verification email:', error);
         } else {
-            console.log('Email sent: ' + info.response);
+            console.log('Verification email sent: ' + info.response);
         }
     });
 };
