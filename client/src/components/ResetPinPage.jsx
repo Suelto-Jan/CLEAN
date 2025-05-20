@@ -24,7 +24,7 @@ const ResetPinPage = () => {
       setLoading(true);
       setError(null); // Reset error state on a new request
 
-      const res = await fetch(`${config.apiUrl}/api/reset-pin/:token`, {
+      const res = await fetch(`${config.apiUrl}/api/reset-pin/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPin: '123456' }),

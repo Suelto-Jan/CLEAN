@@ -43,7 +43,8 @@ const transporter = nodemailer.createTransport({
 
 // Send verification email
 export const sendVerificationEmail = (email, verificationToken) => {
-  const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+  // Use the API_URL instead of CLIENT_URL to ensure the backend handles the verification
+  const verificationUrl = `${process.env.CLIENT_URL}/api/verify-email?token=${verificationToken}`;
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -507,7 +508,7 @@ export const forgotPin = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Reset Your PIN',
-      text: `Click on the following link to reset your PIN: ${process.env.CLIENT_URL}/reset-pin/${resetToken}`,
+      text: `Click on the following link to reset your PIN: ${process.env.API_URL}/api/reset-pin/${resetToken}`,
     };
 
     transporter.sendMail(mailOptions, (err, info) => {
