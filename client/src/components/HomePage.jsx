@@ -110,7 +110,7 @@ const HomePage = () => {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.5 }}
         >
-          Welcome to Markie Store
+          Welcome to Markiee Store
         </motion.h1>
 
         <motion.p
