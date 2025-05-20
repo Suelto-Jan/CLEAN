@@ -1,0 +1,14 @@
+{
+  "name": "clean-pos",
+  "version": "1.0.0",
+  "description": "Point of Sale System",
+  "main": "index.js",
+  "scripts": {
+    "render-build": "npm install && cd client && npm install && npm run build",
+    "start": "cd server && npm start"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "ISC"
+}
