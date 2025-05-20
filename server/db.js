@@ -1,13 +1,18 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(
-      'mongodb+srv://2201102887:test123@cluster0.f3a4r.mongodb.net/PointofSale?retryWrites=true&w=majority&appName=Cluster0',
-      {
-        serverSelectionTimeoutMS: 30000,
-      }
-    );
+    // Use environment variable or fallback to the connection string
+    const MONGODB_URI = process.env.MONGODB_URI ;
+
+    const conn = await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+    });
+
     console.log('MongoDB Connected');
   } catch (error) {
     console.error(`Error: ${error.message}`);
