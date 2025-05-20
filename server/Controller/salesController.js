@@ -91,13 +91,14 @@ export const getTotalSalesDetails = async (req, res) => {
         // Add to user's total spent
         userPurchases[userId].totalSpent += product.totalPrice;
 
-        // Add product to user's products
+        // Add product to user's products with timestamp
         userPurchases[userId].products.push({
           name: product.name,
           price: product.price,
           quantity: product.quantity,
           totalPrice: product.totalPrice,
-          paymentStatus: product.paymentStatus
+          paymentStatus: product.paymentStatus,
+          timestamp: transaction.transactionDate // Add the transaction timestamp
         });
 
         // Add to product summary
@@ -107,9 +108,18 @@ export const getTotalSalesDetails = async (req, res) => {
             quantitySold: 0,
             priceSold: product.price,
             totalRevenue: 0,
-            buyers: []
+            buyers: [],
+            transactions: [] // Add array to store transaction timestamps
           };
         }
+
+        // Add transaction timestamp to the product summary
+        productSummary[product.name].transactions.push({
+          timestamp: transaction.transactionDate,
+          quantity: product.quantity,
+          buyer: userName,
+          paymentStatus: product.paymentStatus
+        });
 
         productSummary[product.name].quantitySold += product.quantity;
         productSummary[product.name].totalRevenue += product.totalPrice;

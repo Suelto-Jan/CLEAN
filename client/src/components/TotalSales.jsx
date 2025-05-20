@@ -222,7 +222,7 @@ function TotalSales() {
   const detailedPurchasesHeader = [
     ['DETAILED PRODUCT PURCHASES BY USER'],
     [''],
-    ['User', 'Product', 'Quantity', 'Price', 'Total', 'Payment Status']
+    ['User', 'Product', 'Quantity', 'Price', 'Total', 'Payment Status', 'Transaction Time']
   ];
 
   const detailedPurchasesRows = [];
@@ -234,28 +234,72 @@ function TotalSales() {
         product.quantity,
         `₱${product.price.toLocaleString()}`,
         `₱${product.totalPrice.toLocaleString()}`,
-        product.paymentStatus
+        product.paymentStatus,
+        product.timestamp ? dayjs(product.timestamp).format('MMM D, YYYY - hh:mm A') : 'N/A'
       ]);
     });
   });
 
   const detailedPurchasesData = [...detailedPurchasesHeader, ...detailedPurchasesRows];
 
+  // Create a chronological transaction log
+  const transactionLogHeader = [
+    ['CHRONOLOGICAL TRANSACTION LOG'],
+    [''],
+    ['Time', 'Product', 'Buyer', 'Quantity', 'Price', 'Total', 'Payment Status']
+  ];
+
+  // Collect all transactions with timestamps
+  const allTransactions = [];
+  data.salesDetails.forEach(product => {
+    if (product.transactions && product.transactions.length > 0) {
+      product.transactions.forEach(transaction => {
+        allTransactions.push({
+          timestamp: transaction.timestamp,
+          product: product.productName,
+          buyer: transaction.buyer,
+          quantity: transaction.quantity,
+          price: product.priceSold,
+          total: product.priceSold * transaction.quantity,
+          paymentStatus: transaction.paymentStatus
+        });
+      });
+    }
+  });
+
+  // Sort transactions by timestamp
+  allTransactions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Create transaction log rows
+  const transactionLogRows = allTransactions.map(transaction => [
+    dayjs(transaction.timestamp).format('MMM D, YYYY - hh:mm:ss A'),
+    transaction.product,
+    transaction.buyer,
+    transaction.quantity,
+    `₱${transaction.price.toLocaleString()}`,
+    `₱${transaction.total.toLocaleString()}`,
+    transaction.paymentStatus
+  ]);
+
+  const transactionLogData = [...transactionLogHeader, ...transactionLogRows];
+
   // Create worksheets
   const ws1 = XLSX.utils.aoa_to_sheet([...reportTitle, ...salesSummary]);
   const ws2 = XLSX.utils.aoa_to_sheet(salesDetailsData);
   const ws3 = XLSX.utils.aoa_to_sheet(userPurchasesData);
   const ws4 = XLSX.utils.aoa_to_sheet(detailedPurchasesData);
+  const ws5 = XLSX.utils.aoa_to_sheet(transactionLogData);
 
   // Set column widths for better readability
   const setCellWidths = (worksheet) => {
     const columnWidths = [
-      { wch: 5 },  // A
-      { wch: 25 }, // B
-      { wch: 15 }, // C
-      { wch: 15 }, // D
-      { wch: 15 }, // E
-      { wch: 40 }  // F
+      { wch: 25 }, // A - Time (wider for timestamps)
+      { wch: 25 }, // B - Product/Name
+      { wch: 25 }, // C - Buyer/Quantity
+      { wch: 15 }, // D - Quantity/Price
+      { wch: 15 }, // E - Price/Total
+      { wch: 15 }, // F - Total/Status
+      { wch: 15 }  // G - Status/Extra
     ];
     worksheet['!cols'] = columnWidths;
   };
@@ -264,12 +308,14 @@ function TotalSales() {
   setCellWidths(ws2);
   setCellWidths(ws3);
   setCellWidths(ws4);
+  setCellWidths(ws5);
 
   // Add worksheets to workbook
   XLSX.utils.book_append_sheet(wb, ws1, 'Sales Summary');
   XLSX.utils.book_append_sheet(wb, ws2, 'Products Sold');
   XLSX.utils.book_append_sheet(wb, ws3, 'User Purchases');
   XLSX.utils.book_append_sheet(wb, ws4, 'Detailed Purchases');
+  XLSX.utils.book_append_sheet(wb, ws5, 'Transaction Timeline');
 
   // Generate and save the Excel file
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -586,6 +632,7 @@ function TotalSales() {
                             <TableCell>Price Sold</TableCell>
                             <TableCell>Total Revenue</TableCell>
                             <TableCell>Buyers</TableCell>
+                            <TableCell>Transaction Times</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -618,6 +665,36 @@ function TotalSales() {
                                           fontSize: '0.75rem'
                                         }}
                                       />
+                                    ))}
+                                  </Box>
+                                ) : (
+                                  'N/A'
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {item.transactions && item.transactions.length > 0 ? (
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    {item.transactions.map((transaction, idx) => (
+                                      <Tooltip
+                                        key={idx}
+                                        title={`${transaction.buyer} - ${transaction.quantity} items - ${transaction.paymentStatus}`}
+                                        arrow
+                                      >
+                                        <Chip
+                                          label={dayjs(transaction.timestamp).format('hh:mm A')}
+                                          size="small"
+                                          sx={{
+                                            backgroundColor: transaction.paymentStatus === 'Paid' ? '#e8f5e9' : '#fff3e0',
+                                            color: transaction.paymentStatus === 'Paid' ? '#2e7d32' : '#e65100',
+                                            fontSize: '0.75rem',
+                                            mb: 0.5
+                                          }}
+                                          icon={transaction.paymentStatus === 'Paid' ?
+                                            <AttachMoneyIcon style={{ fontSize: '0.875rem' }} /> :
+                                            <AccessTimeIcon style={{ fontSize: '0.875rem' }} />
+                                          }
+                                        />
+                                      </Tooltip>
                                     ))}
                                   </Box>
                                 ) : (
@@ -734,6 +811,22 @@ function TotalSales() {
                                             >
                                               ₱{product.totalPrice.toLocaleString()}
                                             </Typography>
+                                            {product.timestamp && (
+                                              <Typography
+                                                variant="caption"
+                                                display="block"
+                                                sx={{
+                                                  mt: 0.5,
+                                                  color: 'text.secondary',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  gap: 0.5
+                                                }}
+                                              >
+                                                <AccessTimeIcon sx={{ fontSize: '0.875rem' }} />
+                                                {dayjs(product.timestamp).format('MMM D, YYYY - hh:mm A')}
+                                              </Typography>
+                                            )}
                                           </Box>
                                         }
                                       />

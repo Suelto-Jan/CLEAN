@@ -20,6 +20,7 @@ function PaymentPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const baseURL = config.apiUrl;
 
@@ -271,7 +272,18 @@ function PaymentPage() {
   };
 
   const handleConfirmPayment = async () => {
+    // Prevent double submissions
+    if (processingPayment) {
+      return;
+    }
+
     try {
+      // Set processing state to true to prevent multiple clicks
+      setProcessingPayment(true);
+
+      // Show loading message
+      message.loading('Processing payment...', 0);
+
       // Ensure the product quantity is updated on the server
       const isUpdated = await updateProductQuantity();
 
@@ -394,6 +406,11 @@ function PaymentPage() {
     } catch (error) {
       console.error('Error during payment confirmation:', error.message);
       message.error('Payment could not be completed. Please try again.');
+    } finally {
+      // Reset processing state regardless of success or failure
+      setProcessingPayment(false);
+      // Destroy any loading message
+      message.destroy();
     }
   };
 
@@ -728,18 +745,21 @@ function PaymentPage() {
   block
   size="large"
   onClick={handlePaymentClick}
-  disabled={!paymentMethod}
+  disabled={!paymentMethod || processingPayment}
+  loading={processingPayment}
   style={{
     background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
     border: 'none',
   }}
 >
-  {cartItems && cartItems.length > 0 ? (
-    `Pay ₱${cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}`
-  ) : product ? (
-    `Pay ₱${product.price * quantity}`
-  ) : (
-    'Pay'
+  {processingPayment ? 'Processing...' : (
+    cartItems && cartItems.length > 0 ? (
+      `Pay ₱${cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}`
+    ) : product ? (
+      `Pay ₱${product.price * quantity}`
+    ) : (
+      'Pay'
+    )
   )}
 </Button>
 
@@ -757,21 +777,30 @@ function PaymentPage() {
           </Typography.Text>
         }
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => !processingPayment && setIsModalOpen(false)}
+        maskClosable={!processingPayment}
+        keyboard={!processingPayment}
+        closable={!processingPayment}
         footer={[
-          <Button key="cancel" onClick={() => setIsModalOpen(false)}>
+          <Button
+            key="cancel"
+            onClick={() => !processingPayment && setIsModalOpen(false)}
+            disabled={processingPayment}
+          >
             Cancel
           </Button>,
           <Button
           key="confirm"
           type="primary"
           onClick={handleConfirmPayment}
+          loading={processingPayment}
+          disabled={processingPayment}
           style={{
             background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
             border: 'none',
           }}
         >
-          Confirm
+          {processingPayment ? 'Processing...' : 'Confirm'}
         </Button>
         ,
         ]}

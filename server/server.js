@@ -66,14 +66,25 @@ const corsOptions = {
             return callback(null, true);
         }
 
+        // In development, allow all origins
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('Allowing all origins in development mode');
+            return callback(null, true);
+        }
+
         console.log('Blocking origin by CORS:', origin);
         callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+    maxAge: 86400 // 24 hours
 }
 app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Use express-session for session handling
 app.use(session({
@@ -120,6 +131,15 @@ app.get('/oauth2callback', (req, res, next) => {
   // Set the token as a cookie
   res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 });
   res.redirect(`${process.env.CLIENT_URL}/login-selection`);
+});
+
+// Test endpoint for CORS
+app.get('/api/cors-test', (req, res) => {
+    res.json({
+        message: 'CORS is working!',
+        origin: req.headers.origin || 'No origin header',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // API routes
