@@ -2,15 +2,15 @@ import nodemailer from 'nodemailer';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import UserModel from '../Models/user.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,  
-    pass: process.env.EMAIL_PASS,  
-  },  
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
   tls: {
     rejectUnauthorized: false  // Ensure the TLS connection is accepted
   }
@@ -28,7 +28,7 @@ async (accessToken, refreshToken, profile, done) => {
 
     if (!user) {
       const imageUrl = profile.photos[0]?.value || 'https://path/to/default-image.jpg';
-    
+
       const defaultPin = '123456'; // Example default PIN
       const hashedPin = await bcrypt.hash(defaultPin, 10);
 

@@ -2,7 +2,7 @@ import multer from 'multer';
 import UserModel from '../Models/user.js';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import Transaction from '../Models/transaction.js';

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 
 // Define schema for User
@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     lastname: {
       type: String,
       required: false, // Optional at registration
-    },    
+    },
     email: {
       type: String,
       required: true, // Keep as required
