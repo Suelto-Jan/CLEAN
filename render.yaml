@@ -2,8 +2,8 @@ services:
   - type: web
     name: clean-pos-backend
     env: node
-    buildCommand: npm run render-build
-    startCommand: npm start
+    buildCommand: bash -c "npm install && cd client && npm install && npm run build"
+    startCommand: bash -c "cd server && npm start"
     envVars:
       - key: NODE_ENV
         value: production
