@@ -95,7 +95,7 @@ const AdminLoginPage = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:8000/api/admin/login", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/admin/login`, {
         email,
         pin,
       });

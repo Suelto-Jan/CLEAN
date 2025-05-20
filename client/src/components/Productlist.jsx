@@ -49,7 +49,7 @@ function ProductList() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const API_BASE_URL = "http://localhost:8000/api";
+  const API_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api`;
 
   useEffect(() => {
     fetchProducts();
@@ -62,7 +62,7 @@ function ProductList() {
         selectedCategory === "all"
           ? `${API_BASE_URL}/products`
           : `${API_BASE_URL}/products?category=${selectedCategory}`;
-      
+
       const response = await axios.get(url);
 
       const filteredProducts = response.data.filter((product) =>
@@ -113,27 +113,27 @@ function ProductList() {
       setSnackbarOpen(true);
       return;
     }
-  
+
     if (!image && !selectedProduct) {
       setSnackbarMessage("Please upload an image.");
       setSnackbarOpen(true);
       return;
     }
-  
+
     try {
       let imageUrl = selectedProduct?.image;
-  
+
       if (image && image instanceof File) {
         imageUrl = await uploadToCloudinary(image);
       }
-  
+
       const productData = {
         ...formValues,
         image: imageUrl
       };
-  
+
       let productResponse;
-  
+
       if (selectedProduct) {
         productResponse = await axios.put(
           `${API_BASE_URL}/products/${selectedProduct._id}`,
@@ -145,7 +145,7 @@ function ProductList() {
           productData
         );
       }
-  
+
       setSnackbarMessage("Product saved successfully.");
       setSnackbarOpen(true);
       handleCloseModal();
@@ -284,7 +284,7 @@ function ProductList() {
                       }}
                     >
                       <img
-                        src={product.image ? (product.image.startsWith('http') ? product.image : `http://localhost:8000/${product.image}`) : '/default-avatar.png'}
+                        src={product.image ? (product.image.startsWith('http') ? product.image : `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/${product.image}`) : '/default-avatar.png'}
                         alt={product.name}
                         style={{
                           width: 80,
@@ -348,7 +348,7 @@ function ProductList() {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          
+
                         </Box>
                       </Box>
                     </Box>

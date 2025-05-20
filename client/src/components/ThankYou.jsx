@@ -31,7 +31,7 @@ function ThankYou() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const baseURL = 'http://localhost:8000';
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   // Retrieve purchase details from location.state or fallback to localStorage
   const { product, cartItems, quantity, totalPrice, paymentMethod, user, isMultipleProducts, receiptUrl } =
     location.state || JSON.parse(localStorage.getItem('lastPurchase')) || {};

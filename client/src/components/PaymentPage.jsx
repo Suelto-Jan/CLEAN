@@ -134,7 +134,7 @@ function PaymentPage() {
 
     try {
       // Make the API request to create the transaction
-      const response = await fetch(`${baseURL}/api/transactions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
@@ -334,7 +334,7 @@ function PaymentPage() {
             };
           }
 
-          const response = await fetch(`${baseURL}/api/generate-receipt`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/generate-receipt`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

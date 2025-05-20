@@ -82,7 +82,7 @@ function ScanPage() {
     setLoading(true); // Set loading state to true while fetching data
 
     try {
-      const response = await fetch(`http://localhost:8000/api/${userId}/transactions`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/${userId}/transactions`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch transactions');
@@ -158,7 +158,7 @@ function ScanPage() {
     console.log('Attempting to fetch product with barcode:', trimmedBarcode);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/products/barcode/${encodeURIComponent(trimmedBarcode)}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products/barcode/${encodeURIComponent(trimmedBarcode)}`);
 
       if (!response.ok) {
         const errorResponse = await response.json();
@@ -245,7 +245,7 @@ function ScanPage() {
 
   const fetchAvailableProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/products');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }

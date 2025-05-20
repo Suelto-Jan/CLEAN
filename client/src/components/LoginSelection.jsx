@@ -33,7 +33,7 @@ function LoginSelectionPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8000/api/users');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/users`);
       if (!res.ok) throw new Error('Failed to fetch users.');
       const data = await res.json();
       setUsers(data);
@@ -61,7 +61,7 @@ function LoginSelectionPage() {
 
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8000/api/login', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: selectedUser.email, pin }),
@@ -93,7 +93,7 @@ function LoginSelectionPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/forgot-pin', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/forgot-pin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,7 +268,7 @@ function LoginSelectionPage() {
               }}
             >
               <motion.img
-                src={user.image ? (user.image.startsWith('http') ? user.image : `http://localhost:8000/${user.image}`) : ''}
+                src={user.image ? (user.image.startsWith('http') ? user.image : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.image}`) : ''}
                 alt={`${user.firstname}'s avatar`}
                 style={{
                   width: "80px",

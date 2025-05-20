@@ -87,7 +87,7 @@ function TotalSales() {
     const fetchSalesData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8000/api/total-sales-details?date=${selectedDate}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/total-sales-details?date=${selectedDate}`);
         if (!response.ok) {
           throw new Error('Failed to fetch sales data');
         }

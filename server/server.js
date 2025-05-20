@@ -28,7 +28,11 @@ const port = process.env.PORT || 8000;
 
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
-        ? [process.env.CLIENT_URL, 'https://clean-pos-frontend.onrender.com']
+        ? [
+            process.env.CLIENT_URL,
+            'https://clean-pos-frontend.onrender.com',
+            'https://682c1cff30ac40008cef192-aquamarine-khapse-67e0d4.netlify.app'
+          ]
         : 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
