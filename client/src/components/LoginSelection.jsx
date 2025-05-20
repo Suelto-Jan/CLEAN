@@ -7,6 +7,7 @@ import COTLOGO from '../images/COT.png';
 import styles from './css/LoginSelection.module.css';
 import { formatDistanceToNow } from 'date-fns';
 import { Modal, Typography } from '@mui/material';
+import { getApiUrl } from '../utils/getApiUrl';
 
 function LoginSelectionPage() {
   const [users, setUsers] = useState([]);
@@ -33,7 +34,8 @@ function LoginSelectionPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/users`);
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/users`);
       if (!res.ok) throw new Error('Failed to fetch users.');
       const data = await res.json();
       setUsers(data);
@@ -61,7 +63,8 @@ function LoginSelectionPage() {
 
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/login`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: selectedUser.email, pin }),
@@ -93,7 +96,8 @@ function LoginSelectionPage() {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/forgot-pin`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/forgot-pin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,7 +272,7 @@ function LoginSelectionPage() {
               }}
             >
               <motion.img
-                src={user.image ? (user.image.startsWith('http') ? user.image : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.image}`) : ''}
+                src={user.image ? (user.image.startsWith('http') ? user.image : `${getApiUrl()}/${user.image}`) : ''}
                 alt={`${user.firstname}'s avatar`}
                 style={{
                   width: "80px",
