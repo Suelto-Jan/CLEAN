@@ -179,7 +179,8 @@ function RegisterPage() {
 
   const googleAuth = () => {
     try {
-      window.open(`${config.apiUrl}/auth/google`, "_self");
+      // Use the full URL to avoid localhost issues with Google OAuth
+      window.open(`https://clean-u8gn.onrender.com/auth/google`, "_self");
     } catch (error) {
       setError("Google authentication failed. Please try again.");
     }

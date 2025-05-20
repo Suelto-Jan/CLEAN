@@ -16,7 +16,6 @@ import {
 } from '@mui/icons-material';
 import bsuLogo from '../images/BSU LOGO.png';
 import cotLogo from '../images/COT.png';
-import config from '../config';
 
 const GoogleLoginCallback = () => {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ const GoogleLoginCallback = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get(`${config.apiUrl}/auth/google/callback`, { withCredentials: true })
+    axios.get(`https://clean-u8gn.onrender.com/auth/google/callback`, { withCredentials: true })
       .then(response => {
         if (response.status === 200 && response.data && response.data.error === false) {
           navigate('/login-selection');
