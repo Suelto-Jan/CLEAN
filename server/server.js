@@ -16,6 +16,7 @@ import salesRoutes from './Routes/salesRoutes.js'
 import transactionRoutes from "./Routes/transcationRoutes.js";
 import receipt from './Routes/receiptRoutes.js'
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 dotenv.config();
@@ -103,7 +104,23 @@ app.use(passport.session());
 
 
 // Google OAuth route for callback
+app.get('/oauth2callback', (req, res, next) => {
+  console.log('Root OAuth callback route hit');
+  next();
+}, passport.authenticate('google', {
+  failureRedirect: `${process.env.CLIENT_URL}/register`,
+}), (req, res) => {
+  // Generate a JWT token upon successful login
+  const token = jwt.sign(
+    { id: req.user._id, email: req.user.email },
+    process.env.JWT_SECRET_KEY,
+    { expiresIn: '1h' }
+  );
 
+  // Set the token as a cookie
+  res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 });
+  res.redirect(`${process.env.CLIENT_URL}/login-selection`);
+});
 
 // API routes
 app.use('/api', userRoutes);

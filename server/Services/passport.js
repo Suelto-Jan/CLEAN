@@ -21,8 +21,9 @@ passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: `${process.env.API_URL}/oauth2callback`,
+  passReqToCallback: true,
 },
-async (accessToken, refreshToken, profile, done) => {
+async (req, accessToken, refreshToken, profile, done) => {
   try {
     let user = await UserModel.findOne({ googleId: profile.id });
 

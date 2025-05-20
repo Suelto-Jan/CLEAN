@@ -48,7 +48,10 @@ router.get("/login/failed", (req, res) => {
 });
 
 // Google login callback route
-router.get('/oauth2callback', passport.authenticate('google', {
+router.get('/oauth2callback', (req, res, next) => {
+  console.log('OAuth callback route hit');
+  next();
+}, passport.authenticate('google', {
   failureRedirect: `${process.env.CLIENT_URL}/register`, // Redirect on failure
 }), async (req, res) => {
   try {
