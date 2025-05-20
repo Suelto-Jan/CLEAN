@@ -37,17 +37,31 @@
 }
 
 .adminIcon {
-  color: white;
+  color: #ffffff;
   margin-right: 20px;
   font-size: 2.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 0 12px rgba(255,255,255,0.9), 0 0 20px rgba(255,255,255,0.7);
+  filter: brightness(1.5) drop-shadow(0 0 5px rgba(255,255,255,0.8));
+  background-color: rgba(255,255,255,0.25);
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.5);
 }
 
 .adminIcon:hover {
-  transform: translateY(-2px);
-  text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transform: translateY(-2px) scale(1.1);
+  text-shadow: 0 0 15px #ffffff, 0 0 25px #ffffff;
+  color: #ffffff;
+  filter: brightness(1.8) drop-shadow(0 0 8px rgba(255,255,255,0.9));
+  background-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 20px rgba(255,255,255,0.7);
 }
 
 .navButtons {
@@ -178,19 +192,19 @@
   .title {
     font-size: 2.5rem;
   }
-  
+
   .subtitle {
     font-size: 1.4rem;
   }
-  
+
   .logoImg {
     height: 100px;
   }
-  
+
   .navButtons {
     gap: 10px;
   }
-  
+
   .customButton {
     padding: 10px 20px;
     font-size: 0.9rem;

@@ -13,6 +13,8 @@ import {
   CssBaseline,
   useTheme,
   useMediaQuery,
+  Card,
+  Grid,
 } from "@mui/material";
 import { FaUsers, FaBox, FaChartLine } from "react-icons/fa";
 import { IoLogOut, IoMenu, IoClose } from "react-icons/io5";
@@ -23,6 +25,7 @@ import TotalSales from "./TotalSales";
 import AdminProfile from "./AdminProfile";
 import axios from "axios";
 import PersonIcon from "@mui/icons-material/Person";
+import { People as PeopleIcon, Inventory2 as InventoryIcon, BarChart as BarChartIcon } from '@mui/icons-material';
 
 
 
@@ -34,6 +37,7 @@ function Dashboard() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const drawerWidth = 240;
+  const [stats, setStats] = useState({ users: 0, products: 0, sales: 0 });
 
   // Fetch admin data based on the current token in localStorage
   useEffect(() => {
@@ -67,6 +71,28 @@ function Dashboard() {
 
     fetchAdminData();
   }, [navigate]); // This effect depends on navigation changes and will run whenever the page is loaded or token changes
+
+  // Fetch dashboard stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const [usersRes, productsRes, salesRes] = await Promise.all([
+          axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:8000/api/products", { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:8000/api/total-sales-details", { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        setStats({
+          users: usersRes.data.length,
+          products: productsRes.data.length,
+          sales: salesRes.data.totalSales || 0,
+        });
+      } catch (err) {
+        // ignore errors for stats
+      }
+    };
+    fetchStats();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // Remove token on logout
@@ -435,14 +461,80 @@ function Dashboard() {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           marginTop: isMobile ? "64px" : 0,
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)",
         }}
       >
+        {/* Dashboard Welcome & Stats Section (only on main dashboard route) */}
+        {window.location.pathname === "/admin" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            style={{ marginBottom: 40 }}
+          >
+            <Box
+              sx={{
+                background: "rgba(255,255,255,0.95)",
+                borderRadius: "24px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+                padding: { xs: 3, md: 5 },
+                mb: 4,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                Welcome, {admin?.firstname} {admin?.lastname}!
+              </Typography>
+              <Typography variant="body1" sx={{ color: "#666", mb: 3 }}>
+                Here's a quick overview of your store's performance today.
+              </Typography>
+              <Grid container spacing={3} justifyContent="center">
+                <Grid item xs={12} sm={4}>
+                  <Card sx={{ borderRadius: 3, boxShadow: 2, p: 2, display: "flex", alignItems: "center", gap: 2 }}>
+                    <Avatar sx={{ bgcolor: "#1a2a6c", width: 56, height: 56 }}>
+                      <PeopleIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>{stats.users}</Typography>
+                      <Typography variant="body2" color="text.secondary">Users</Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Card sx={{ borderRadius: 3, boxShadow: 2, p: 2, display: "flex", alignItems: "center", gap: 2 }}>
+                    <Avatar sx={{ bgcolor: "#b21f1f", width: 56, height: 56 }}>
+                      <InventoryIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>{stats.products}</Typography>
+                      <Typography variant="body2" color="text.secondary">Products</Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Card sx={{ borderRadius: 3, boxShadow: 2, p: 2, display: "flex", alignItems: "center", gap: 2 }}>
+                    <Avatar sx={{ bgcolor: "#fdbb2d", width: 56, height: 56, color: "#1a2a6c" }}>
+                      <BarChartIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>₱{stats.sales.toLocaleString()}</Typography>
+                      <Typography variant="body2" color="text.secondary">Total Sales</Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
+          </motion.div>
+        )}
         <Routes>
           <Route path="/user-list" element={<UserList />} />
           <Route path="/product-list" element={<ProductList />} />
           <Route path="/total-sales" element={<TotalSales />} />
           <Route path="/admin-profile" element={<AdminProfile />} />
-          
         </Routes>
       </Box>
     </Box>

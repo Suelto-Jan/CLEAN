@@ -82,34 +82,34 @@ const AdminLoginPage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!email || !pin) {
       setErrorMessage("Please enter both email and PIN.");
       return;
     }
-  
+
     if (pin.length !== 6) {
       setErrorMessage("PIN must be a 6-digit number.");
       return;
     }
-  
+
     try {
       setLoading(true);
       const response = await axios.post("http://localhost:8000/api/admin/login", {
         email,
         pin,
       });
-  
+
       console.log(response.data); // Check if the token is being returned in the response.
-  
+
       if (response.status === 200) {
-       
+
        console.log(localStorage.getItem("token")); // Check if token is set
 
         // Store the new token and admin data
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("adminData", JSON.stringify(response.data.admin));
-  
+
         // Navigate to the dashboard
         navigate("/dashboard");
       } else {
@@ -132,7 +132,7 @@ const AdminLoginPage = () => {
       setLoading(false);
     }
   };
-  
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -194,18 +194,29 @@ const AdminLoginPage = () => {
           <Tooltip title="Go Back" arrow>
             <IconButton
               sx={{
-                bgcolor: "white",
-                "&:hover": { bgcolor: "grey.100" },
-                boxShadow: 3,
-                borderRadius: "20%",
+                bgcolor: "rgba(255,255,255,0.25)",
+                color: "#ffffff",
+                width: "40px",
+                height: "40px",
+                padding: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                boxShadow: "0 0 15px rgba(255,255,255,0.5)",
+                textShadow: "0 0 12px rgba(255,255,255,0.9), 0 0 20px rgba(255,255,255,0.7)",
+                filter: "brightness(1.5) drop-shadow(0 0 5px rgba(255,255,255,0.8))",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  transform: "scale(1.1)",
+                  bgcolor: "rgba(255,255,255,0.4)",
+                  transform: "translateY(-2px) scale(1.1)",
+                  boxShadow: "0 0 20px rgba(255,255,255,0.7)",
+                  filter: "brightness(1.8) drop-shadow(0 0 8px rgba(255,255,255,0.9))"
                 }
               }}
               onClick={() => navigate(-1)}
             >
-              <ArrowBackIcon fontSize="large" sx={{ color: "primary.main" }} />
+              <ArrowBackIcon fontSize="medium" sx={{ color: "#ffffff" }} />
             </IconButton>
           </Tooltip>
         </motion.div>
@@ -285,7 +296,7 @@ const AdminLoginPage = () => {
                     marginTop: "16px",
                   }}
                 >
-                  Markie Store Admin 
+                  Markie Store Admin
                 </Typography>
               </motion.div>
 
@@ -341,9 +352,21 @@ const AdminLoginPage = () => {
                   variant="outlined"
                   type="password"
                   value={pin}
-                  onChange={(e) => setPin(e.target.value)}
+                  onChange={(e) => {
+                    // Only allow numeric input
+                    const numericValue = e.target.value.replace(/\D/g, '');
+                    // Limit to 6 digits
+                    if (numericValue.length <= 6) {
+                      setPin(numericValue);
+                    }
+                  }}
                   margin="normal"
                   required
+                  inputProps={{
+                    maxLength: 6,
+                    inputMode: "numeric",
+                    pattern: "[0-9]*"
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -351,6 +374,7 @@ const AdminLoginPage = () => {
                       </InputAdornment>
                     ),
                   }}
+                  helperText="Enter a 6-digit PIN"
                 />
                 <motion.div
                   whileHover={{ scale: 1.02 }}
@@ -363,11 +387,12 @@ const AdminLoginPage = () => {
                     fullWidth
                     disabled={loading}
                     sx={{
-                      background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                      color: "white",
-                      padding: "12px",
+                      padding: "12px 24px",
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      transition: "all 0.3s ease",
                       "&:hover": {
-                        background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                        transform: "translateY(-2px)",
                       },
                     }}
                   >

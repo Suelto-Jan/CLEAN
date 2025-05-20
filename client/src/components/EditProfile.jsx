@@ -24,6 +24,7 @@ import {
   Lock,
   Person,
 } from '@mui/icons-material';
+import { uploadToCloudinary } from '../config/cloudinary';
 
 function EditProfile() {
   const [user, setUser] = useState({
@@ -56,7 +57,13 @@ function EditProfile() {
         });
         const fetchedUser = response.data;
         setUser(fetchedUser);
-        setPreviewImage(fetchedUser.image ? `http://localhost:8000/${fetchedUser.image}` : '');
+        setPreviewImage(
+          fetchedUser.image
+            ? fetchedUser.image.startsWith('http')
+              ? fetchedUser.image
+              : `http://localhost:8000/${fetchedUser.image}`
+            : ''
+        );
         setLoading(false);
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -100,23 +107,34 @@ function EditProfile() {
       return;
     }
 
-    const formData = new FormData();
-    if (user.firstname.trim()) formData.append('firstname', user.firstname);
-    if (user.lastname.trim()) formData.append('lastname', user.lastname);
-    if (pin.trim()) formData.append('pin', pin);
-    if (user.image instanceof File) formData.append('image', user.image);
+    let imageUrl = user.image;
+    if (user.image instanceof File) {
+      try {
+        imageUrl = await uploadToCloudinary(user.image);
+      } catch (err) {
+        setError('Image upload failed. Please try again.');
+        setSaving(false);
+        return;
+      }
+    }
+
+    const payload = {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      pin: pin,
+      image: imageUrl,
+    };
 
     try {
-      const response = await axios.put('http://localhost:8000/api/user/me', formData, {
+      const response = await axios.put('http://localhost:8000/api/user/me', payload, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
 
       const updatedUser = response.data.user;
       setUser(updatedUser);
-      setPreviewImage(updatedUser.image ? `http://localhost:8000/${updatedUser.image}` : '');
+      setPreviewImage(updatedUser.image || '');
       setSuccess('Profile updated successfully!');
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setTimeout(() => navigate('/scan'), 2000);

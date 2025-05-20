@@ -8,14 +8,21 @@ const router = express.Router();
 router.post(
   '/generate-receipt',
   [
-    body('product.name').notEmpty().withMessage('Product name is required'),
-    body('product.price').isFloat({ gt: 0 }).withMessage('Product price must be positive'),
-    body('quantity').isInt({ gt: 0 }).withMessage('Quantity must be a positive integer'),
+    body('isMultipleProducts').isBoolean().withMessage('isMultipleProducts flag is required'),
     body('totalPrice').isFloat({ gt: 0 }).withMessage('Total price must be positive'),
     body('paymentMethod').notEmpty().withMessage('Payment method is required'),
     body('user.email').isEmail().withMessage('Valid user email is required'),
     body('user.firstname').notEmpty().withMessage('User first name is required'),
     body('user.lastname').notEmpty().withMessage('User last name is required'),
+    // Conditional validation based on isMultipleProducts
+    body('product.name').if(body('isMultipleProducts').equals('false'))
+      .notEmpty().withMessage('Product name is required for single product'),
+    body('product.price').if(body('isMultipleProducts').equals('false'))
+      .isFloat({ gt: 0 }).withMessage('Product price must be positive for single product'),
+    body('quantity').if(body('isMultipleProducts').equals('false'))
+      .isInt({ gt: 0 }).withMessage('Quantity must be a positive integer for single product'),
+    body('products').if(body('isMultipleProducts').equals('true'))
+      .isArray().withMessage('Products array is required for multiple products'),
   ],
   (req, res, next) => {
     const errors = validationResult(req);

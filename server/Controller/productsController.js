@@ -1,30 +1,15 @@
 import Product from '../Models/product.js';
 import path from 'path';
-import multer from 'multer';
 import mongoose from 'mongoose';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'products/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Ensure unique file names
-  },
-})
-
-const upload = multer({ storage: storage });
 // Register a new product
 export const registerProduct = async (req, res) => {
   try {
-    console.log('Received product data:', req.body);
-    console.log('Uploaded file:', req.file);
-
-    const { name, price, quantity, barcode, sku, category  } = req.body;
-    const image = req.file ? path.join('products', req.file.filename) : null;  // Ensure image path is correct
+    const { name, price, quantity, barcode, sku, category, image } = req.body;
 
     // Validation checks
     if (!name || !price || !quantity || !barcode || !category || !image) {
-      return res.status(400).json({ message: 'Please provide name, price, quantity, barcode, and category.' });
+      return res.status(400).json({ message: 'Please provide name, price, quantity, barcode, category, and image.' });
     }
 
     if (isNaN(price) || price <= 0) {
@@ -48,7 +33,6 @@ export const registerProduct = async (req, res) => {
       uniqueSku = `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       existingSkuProduct = await Product.findOne({ sku: uniqueSku });
     }
-    
 
     // Save new product
     const newProduct = new Product({
@@ -58,7 +42,7 @@ export const registerProduct = async (req, res) => {
       barcode,
       category,
       sku: uniqueSku,
-      image,
+      image, // This is now the Cloudinary URL
     });
 
     const product = await newProduct.save();
@@ -72,7 +56,7 @@ export const registerProduct = async (req, res) => {
         quantity: product.quantity,
         barcode: product.barcode,
         category: product.category,
-        image: product.image ? `products/${product.image}` : null,  // Ensure correct image URL is returned
+        image: product.image || null,  // Cloudinary URL
       },
     });
   } catch (error) {
@@ -130,24 +114,13 @@ export const getProductByBarcode = async (req, res) => {
   }
 };
 
-
-
 // Update product by ID
 // Assuming the model file is named this way
 
 export const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-
-    // Check if the product exists
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-
-    // Prepare the updated data
-    const updatedProductData = { ...req.body };
-    if (req.file) {
-      updatedProductData.image = path.join('products', req.file.filename); // Update image path
-    }
+    const updatedProductData = { ...req.body }; // image is now a URL
 
     // Update the product
     const updatedProduct = await Product.findByIdAndUpdate(productId, updatedProductData, {
@@ -165,8 +138,6 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ message: `Error updating product: ${error.message}` });
   }
 };
-
-
 
 // Delete product by ID
 export const deleteProduct = async (req, res) => {

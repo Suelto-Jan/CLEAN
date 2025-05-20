@@ -20,10 +20,13 @@ import {
   useTheme,
   useMediaQuery,
   Alert,
+  Divider,
 } from "@mui/material";
-import { Search as SearchIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { Search as SearchIcon, Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { uploadToCloudinary } from "../config/cloudinary";
+import { FaBox } from "react-icons/fa";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
@@ -117,30 +120,29 @@ function ProductList() {
       return;
     }
   
-    const formData = new FormData();
-  
-    Object.keys(formValues).forEach((key) => {
-      formData.append(key, formValues[key]);
-    });
-  
-    if (image && image instanceof File) {
-      formData.append("image", image);
-    }
-  
     try {
+      let imageUrl = selectedProduct?.image;
+  
+      if (image && image instanceof File) {
+        imageUrl = await uploadToCloudinary(image);
+      }
+  
+      const productData = {
+        ...formValues,
+        image: imageUrl
+      };
+  
       let productResponse;
   
       if (selectedProduct) {
         productResponse = await axios.put(
           `${API_BASE_URL}/products/${selectedProduct._id}`,
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          productData
         );
       } else {
         productResponse = await axios.post(
           `${API_BASE_URL}/registerProduct`,
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          productData
         );
       }
   
@@ -191,34 +193,37 @@ function ProductList() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      style={{ padding: "30px", backgroundColor: "#f4f6f9", minHeight: "100vh" }}
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
+        padding: "30px",
+      }}
     >
-      <Typography
-        variant="h5"
-        gutterBottom
+      <Box
         sx={{
-          fontWeight: "600",
-          color: "#333",
-          marginBottom: "24px",
-          background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          maxWidth: "1400px",
+          margin: "0 auto",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          borderRadius: "24px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+          backdropFilter: "blur(10px)",
+          padding: "30px",
         }}
       >
-        Product Management
-      </Typography>
-
-      {/* Search and Filter Section */}
-      <motion.div variants={itemVariants}>
-        <Box
+        <Typography
+          variant="h4"
           sx={{
-            marginBottom: "20px",
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            gap: "16px",
-            alignItems: isMobile ? "stretch" : "center",
+            fontWeight: "600",
+            marginBottom: "30px",
+            background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
           }}
         >
+          Product Management
+        </Typography>
+
+        <motion.div variants={itemVariants}>
           <TextField
             label="Search Products"
             variant="outlined"
@@ -228,6 +233,7 @@ function ProductList() {
             size="small"
             sx={{
               maxWidth: isMobile ? "100%" : "400px",
+              marginBottom: "24px",
               "& .MuiOutlinedInput-root": {
                 borderRadius: "12px",
               },
@@ -240,398 +246,339 @@ function ProductList() {
               ),
             }}
           />
+        </motion.div>
 
-          <Box
-            sx={{
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
-            <Button
-              variant={selectedCategory === "all" ? "contained" : "outlined"}
-              onClick={() => handleCategoryChange({ target: { value: "all" } })}
-              sx={{
-                borderRadius: "12px",
-                textTransform: "none",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                },
-              }}
-            >
-              View All Products
-            </Button>
-            <Button
-              variant={selectedCategory === "drinks" ? "contained" : "outlined"}
-              onClick={() => handleCategoryChange({ target: { value: "drinks" } })}
-              sx={{
-                borderRadius: "12px",
-                textTransform: "none",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                },
-              }}
-            >
-              View Drinks
-            </Button>
-            <Button
-              variant={selectedCategory === "junkfood" ? "contained" : "outlined"}
-              onClick={() => handleCategoryChange({ target: { value: "junkfood" } })}
-              sx={{
-                borderRadius: "12px",
-                textTransform: "none",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                },
-              }}
-            >
-              View Junk Foods
-            </Button>
-          </Box>
-        </Box>
-      </motion.div>
-
-      {/* Add New Product Button */}
-      <motion.div variants={itemVariants}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenModal()}
-          sx={{
-            marginBottom: "24px",
-            borderRadius: "12px",
-            background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-            textTransform: "none",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
-              transform: "translateY(-2px)",
-            },
-          }}
-        >
-          Add New Product
-        </Button>
-      </motion.div>
-
-      {/* Products Grid */}
-      <Grid container spacing={3}>
-        {loading ? (
-          <Grid item xs={12} sx={{ textAlign: "center", padding: "40px" }}>
-            <CircularProgress />
-          </Grid>
-        ) : (
-          products.map((product) => (
-            <Grid item xs={12} sm={6} md={4} key={product._id}>
-              <motion.div variants={itemVariants}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    borderRadius: "16px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                    },
-                  }}
-                >
-                  <CardContent>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: "180px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        borderRadius: "12px",
-                        mb: 2,
-                        backgroundColor: "#f8f9fa",
-                      }}
-                    >
-                      <img
-                        src={product.image ? `http://localhost:8000/${product.image}` : '/default-avatar.png'}
-                        alt={product.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                        }}
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "16px",
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        component="h2"
-                        sx={{
-                          fontWeight: "600",
-                          color: "#333",
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-                      <Box>
-                        <Tooltip title="Edit">
-                          <IconButton
-                            onClick={() => handleOpenModal(product)}
-                            sx={{
-                              color: "#1a2a6c",
-                              "&:hover": {
-                                backgroundColor: "rgba(26, 42, 108, 0.1)",
-                              },
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ marginBottom: "8px" }}
-                    >
-                      Category: {product.category}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ marginBottom: "8px" }}
-                    >
-                      Price: ₱{product.price}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ marginBottom: "8px" }}
-                    >
-                      Quantity: {product.quantity}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ marginBottom: "8px" }}
-                    >
-                      Barcode: {product.barcode}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
+        <Grid container spacing={3}>
+          {loading ? (
+            <Grid item xs={12} sx={{ textAlign: "center", padding: "40px" }}>
+              <CircularProgress />
             </Grid>
-          ))
-        )}
-      </Grid>
-
-      {/* Add/Edit Product Modal */}
-      <Modal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        aria-labelledby="product-modal-title"
-        aria-describedby="product-modal-description"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: isMobile ? "90%" : 400,
-            bgcolor: "background.paper",
-            borderRadius: "16px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-            p: 4,
-          }}
-        >
-          <Typography
-            id="product-modal-title"
-            variant="h6"
-            component="h2"
-            sx={{
-              marginBottom: "24px",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
-            {selectedProduct ? "Edit Product" : "Add New Product"}
-          </Typography>
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Product Name"
-                  name="name"
-                  value={formValues.name}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Price"
-                  name="price"
-                  type="number"
-                  value={formValues.price}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">₱</InputAdornment>,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Quantity"
-                  name="quantity"
-                  type="number"
-                  value={formValues.quantity}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Barcode"
-                  name="barcode"
-                  value={formValues.barcode}
-                  onChange={handleInputChange}
-                  fullWidth
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    name="category"
-                    value={formValues.category}
-                    onChange={handleInputChange}
-                    label="Category"
-                    sx={{
-                      borderRadius: "12px",
-                    }}
-                  >
-                    <MenuItem value="drinks">Drinks</MenuItem>
-                    <MenuItem value="junkfood">Junk Food</MenuItem>
-                    <MenuItem value="others">Others</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  fullWidth
-                  sx={{
-                    borderRadius: "12px",
-                    textTransform: "none",
-                    borderColor: "#1a2a6c",
-                    color: "#1a2a6c",
-                    "&:hover": {
-                      backgroundColor: "#1a2a6c",
-                      color: "white",
-                    },
-                  }}
+          ) : (
+            products.map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product._id}>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02 }}
+                  style={{ height: "100%" }}
                 >
-                  Upload Product Image
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </Button>
-              </Grid>
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: "16px",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <Button
-                    onClick={handleCloseModal}
+                  <Card
                     sx={{
-                      borderRadius: "12px",
-                      textTransform: "none",
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleSubmit}
-                    sx={{
-                      borderRadius: "12px",
-                      textTransform: "none",
-                      background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: "16px",
+                      overflow: "hidden",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      transition: "all 0.3s ease",
                       "&:hover": {
-                        background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                       },
                     }}
                   >
-                    {selectedProduct ? "Update" : "Add"}
-                  </Button>
-                </Box>
+                    <Box
+                      sx={{
+                        padding: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "15px",
+                      }}
+                    >
+                      <img
+                        src={product.image ? (product.image.startsWith('http') ? product.image : `http://localhost:8000/${product.image}`) : '/default-avatar.png'}
+                        alt={product.name}
+                        style={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: "12px",
+                          objectFit: "cover",
+                          border: "3px solid #1a2a6c",
+                        }}
+                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: "600",
+                            color: "#333",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {product.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#666",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {product.category}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: product.quantity > 0 ? "#4caf50" : "#f44336",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Stock: {product.quantity}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "#1a2a6c",
+                            fontWeight: "600",
+                          }}
+                        >
+                          ₱{product.price}
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                          <Tooltip title="Edit">
+                            <IconButton
+                              onClick={() => handleOpenModal(product)}
+                              sx={{
+                                color: "#1a2a6c",
+                                "&:hover": {
+                                  backgroundColor: "rgba(26, 42, 108, 0.1)",
+                                },
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Card>
+                </motion.div>
               </Grid>
-            </Grid>
-          </Box>
-        </Box>
-      </Modal>
+            ))
+          )}
+        </Grid>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="success"
-          sx={{
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          }}
+        <motion.div variants={itemVariants} style={{ marginTop: "30px", textAlign: "right" }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenModal()}
+            sx={{
+              borderRadius: "12px",
+              textTransform: "none",
+              transition: "all 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            Add New Product
+          </Button>
+        </motion.div>
+
+        {/* Add/Edit Product Modal */}
+        <Modal
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          aria-labelledby="product-modal-title"
+          aria-describedby="product-modal-description"
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: isMobile ? "90%" : 400,
+              bgcolor: "background.paper",
+              borderRadius: "16px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+              p: 4,
+            }}
+          >
+            <Typography
+              id="product-modal-title"
+              variant="h6"
+              component="h2"
+              sx={{
+                marginBottom: "24px",
+                fontWeight: "600",
+                color: "#333",
+              }}
+            >
+              {selectedProduct ? "Edit Product" : "Add New Product"}
+            </Typography>
+            <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Product Name"
+                    name="name"
+                    value={formValues.name}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Price"
+                    name="price"
+                    type="number"
+                    value={formValues.price}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Quantity"
+                    name="quantity"
+                    type="number"
+                    value={formValues.quantity}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Barcode"
+                    name="barcode"
+                    value={formValues.barcode}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      name="category"
+                      value={formValues.category}
+                      onChange={handleInputChange}
+                      label="Category"
+                      sx={{
+                        borderRadius: "12px",
+                      }}
+                    >
+                      <MenuItem value="drinks">Drinks</MenuItem>
+                      <MenuItem value="junkfood">Junk Food</MenuItem>
+                      <MenuItem value="others">Others</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                    sx={{
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                      },
+                    }}
+                  >
+                    Upload Product Image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </Button>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: "16px",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <Button
+                      onClick={handleCloseModal}
+                      variant="text"
+                      sx={{
+                        borderRadius: "12px",
+                        textTransform: "none",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleSubmit}
+                      sx={{
+                        borderRadius: "12px",
+                        textTransform: "none",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                    >
+                      {selectedProduct ? "Update" : "Add"}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity="success"
+            sx={{
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
     </motion.div>
   );
 }

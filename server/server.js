@@ -24,19 +24,18 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 connectDB();
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 
-app.use(cors({ origin: 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST','DELETE','PUT','PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? process.env.CLIENT_URL 
+        : 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}
+app.use(cors(corsOptions));
 
-  const corsOptions = {
-    origin: process.env.VITE_CLIENT_URL || 'http://localhost:3000', // Allow frontend URL
-    credentials: true,  // Allow cookies to be sent
-  }
-  app.use(cors(corsOptions));
 // Use express-session for session handling
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret', // Make sure this is set in .env

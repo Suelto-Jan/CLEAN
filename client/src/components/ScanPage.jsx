@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBox } from 'react-icons/fa';
-import { Grid } from '@mui/material';
+import { FaBox, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { Grid, Badge } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -15,6 +15,12 @@ import {
   useMediaQuery,
   Alert,
   Snackbar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider,
+  Paper,
 } from '@mui/material';
 import {
   FaUserCircle,
@@ -23,6 +29,8 @@ import {
   FaSignOutAlt,
   FaCheckCircle,
   FaClock,
+  FaPlus,
+  FaMinus,
 } from 'react-icons/fa';
 import axios from 'axios';
 
@@ -44,6 +52,10 @@ function ScanPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [availableProducts, setAvailableProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+
+  // Cart state
+  const [cart, setCart] = useState([]);
+  const [showCartModal, setShowCartModal] = useState(false);
 
   // Fetch user data and transactions
   const fetchUserData = async () => {
@@ -71,7 +83,7 @@ function ScanPage() {
 
     try {
       const response = await fetch(`http://localhost:8000/api/${userId}/transactions`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch transactions');
       }
@@ -123,8 +135,8 @@ function ScanPage() {
       fetchProductDetails();
     }
   };
-  
-  
+
+
 
   const handleScanClick = () => {
     setShowScanner(true);
@@ -137,26 +149,37 @@ function ScanPage() {
 
   const fetchProductDetails = async () => {
     const trimmedBarcode = barcode.trim();
-  
+
     if (!trimmedBarcode) {
       setError('Please scan or enter a valid barcode.');
       return;
     }
-  
+
     console.log('Attempting to fetch product with barcode:', trimmedBarcode);
-  
+
     try {
       const response = await fetch(`http://localhost:8000/api/products/barcode/${encodeURIComponent(trimmedBarcode)}`);
-  
+
       if (!response.ok) {
         const errorResponse = await response.json();
         throw new Error(errorResponse.message || 'Product not found!');
       }
-  
+
       const product = await response.json();
       console.log('Successfully fetched product:', product);
-  
-      navigate('/payment', { state: { product } });
+
+      // Check if product is in stock
+      if (product.quantity <= 0) {
+        setError(`${product.name} is out of stock.`);
+        return;
+      }
+
+      // Add product to cart with quantity 1
+      addToCart(product);
+
+      // Show success message
+      setSnackbarMessage(`${product.name} added to cart!`);
+      setSnackbarOpen(true);
       setError('');
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -166,7 +189,60 @@ function ScanPage() {
       setShowScanner(false);
     }
   };
-  
+
+  // Function to add product to cart
+  const addToCart = (product) => {
+    setCart(prevCart => {
+      // Check if product is already in cart
+      const existingProductIndex = prevCart.findIndex(item => item.product._id === product._id);
+
+      if (existingProductIndex >= 0) {
+        // Product exists, increment quantity
+        const updatedCart = [...prevCart];
+        updatedCart[existingProductIndex].quantity += 1;
+        return updatedCart;
+      } else {
+        // Product doesn't exist, add new item
+        return [...prevCart, { product, quantity: 1 }];
+      }
+    });
+  };
+
+  // Function to remove product from cart
+  const removeFromCart = (productId) => {
+    setCart(prevCart => prevCart.filter(item => item.product._id !== productId));
+  };
+
+  // Function to update product quantity in cart
+  const updateCartItemQuantity = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
+    setCart(prevCart => {
+      return prevCart.map(item => {
+        if (item.product._id === productId) {
+          // Make sure we don't exceed available stock
+          const maxQuantity = item.product.quantity;
+          const safeQuantity = Math.min(newQuantity, maxQuantity);
+          return { ...item, quantity: safeQuantity };
+        }
+        return item;
+      });
+    });
+  };
+
+  // Function to proceed to checkout
+  const proceedToCheckout = () => {
+    if (cart.length === 0) {
+      setError('Your cart is empty. Please scan products first.');
+      return;
+    }
+
+    navigate('/payment', { state: { cart } });
+  };
+
   const fetchAvailableProducts = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/products');
@@ -310,8 +386,26 @@ function ScanPage() {
             top: "20px",
             right: "20px",
             zIndex: 1,
+            display: "flex",
+            gap: 2
           }}
         >
+          <Tooltip title={`Shopping Cart (${cart.length})`}>
+            <IconButton
+              onClick={() => setShowCartModal(true)}
+              sx={{
+                backgroundColor: "rgba(25, 118, 210, 0.1)",
+                color: "#1976d2",
+                "&:hover": {
+                  backgroundColor: "rgba(25, 118, 210, 0.2)",
+                },
+              }}
+            >
+              <Badge badgeContent={cart.length} color="primary">
+                <FaShoppingCart />
+              </Badge>
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Logout">
             <IconButton
               onClick={handleLogout}
@@ -359,7 +453,7 @@ function ScanPage() {
               {user?.image ? (
                 <Box
                   component="img"
-                  src={`http://localhost:8000/${user.image}`}
+                  src={user.image.startsWith('http') ? user.image : `http://localhost:8000/${user.image}`}
                   alt="User"
                   sx={{
                     width: 80,
@@ -688,7 +782,7 @@ function ScanPage() {
                 {product.image ? (
                   <Box
                     component="img"
-                    src={`http://localhost:8000/${product.image}`}
+                    src={product.image}
                     alt={product.name}
                     sx={{
                       width: "60px",
@@ -737,7 +831,7 @@ function ScanPage() {
 </motion.div>
 
           </motion.div>
-   
+
           {/* Right Section */}
           <motion.div
             variants={itemVariants}
@@ -780,13 +874,13 @@ function ScanPage() {
                   startIcon={<FaBarcode />}
                   onClick={handleScanClick}
                   sx={{
-                    padding: "15px 30px",
+                    padding: "12px 24px",
                     fontSize: "18px",
                     borderRadius: "12px",
                     textTransform: "none",
-                    background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+                    transition: "all 0.3s ease",
                     "&:hover": {
-                      background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                      transform: "translateY(-2px)",
                     },
                   }}
                 >
@@ -906,9 +1000,14 @@ function ScanPage() {
           >
             <Button
               onClick={() => setShowPaymentModal(false)}
+              variant="text"
               sx={{
                 borderRadius: "12px",
                 textTransform: "none",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                },
               }}
             >
               Cancel
@@ -919,9 +1018,9 @@ function ScanPage() {
               sx={{
                 borderRadius: "12px",
                 textTransform: "none",
-                background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+                transition: "all 0.3s ease",
                 "&:hover": {
-                  background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                  transform: "translateY(-2px)",
                 },
               }}
             >
@@ -949,6 +1048,180 @@ function ScanPage() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* Shopping Cart Modal */}
+      <Modal
+        open={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        aria-labelledby="cart-modal-title"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: isMobile ? '90%' : 600,
+            maxHeight: '80vh',
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            boxShadow: 24,
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
+          <Typography id="cart-modal-title" variant="h5" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
+            Shopping Cart
+          </Typography>
+
+          {cart.length === 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4 }}>
+              <FaShoppingCart style={{ fontSize: 60, color: '#ccc', marginBottom: 16 }} />
+              <Typography variant="h6" color="text.secondary">
+                Your cart is empty
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Scan products to add them to your cart
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <Paper
+                elevation={0}
+                sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  maxHeight: '50vh',
+                  mb: 3,
+                  border: '1px solid #eee',
+                  borderRadius: 2
+                }}
+              >
+                <List>
+                  {cart.map((item, index) => (
+                    <React.Fragment key={item.product._id}>
+                      <ListItem>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          {item.product.image ? (
+                            <Box
+                              component="img"
+                              src={item.product.image}
+                              alt={item.product.name}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 1,
+                                objectFit: 'cover',
+                                mr: 2
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 1,
+                                backgroundColor: '#f0f0f0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2
+                              }}
+                            >
+                              <FaBox />
+                            </Box>
+                          )}
+
+                          <Box sx={{ flex: 1 }}>
+                            <ListItemText
+                              primary={item.product.name}
+                              secondary={`₱${item.product.price.toFixed(2)} each`}
+                            />
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => updateCartItemQuantity(item.product._id, item.quantity - 1)}
+                                sx={{ border: '1px solid #ddd' }}
+                              >
+                                <FaMinus size={12} />
+                              </IconButton>
+
+                              <Typography sx={{ mx: 2 }}>
+                                {item.quantity}
+                              </Typography>
+
+                              <IconButton
+                                size="small"
+                                onClick={() => updateCartItemQuantity(item.product._id, item.quantity + 1)}
+                                sx={{ border: '1px solid #ddd' }}
+                                disabled={item.quantity >= item.product.quantity}
+                              >
+                                <FaPlus size={12} />
+                              </IconButton>
+                            </Box>
+                          </Box>
+
+                          <Box sx={{ textAlign: 'right', minWidth: 80 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                              ₱{(item.product.price * item.quantity).toFixed(2)}
+                            </Typography>
+
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => removeFromCart(item.product._id)}
+                              sx={{ mt: 1 }}
+                            >
+                              <FaTrash size={14} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      </ListItem>
+                      {index < cart.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </Paper>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Total:
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                  ₱{cart.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowCartModal(false)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Continue Shopping
+                </Button>
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={proceedToCheckout}
+                  startIcon={<FaCheckCircle />}
+                  sx={{
+                    borderRadius: 2,
+                    background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  Proceed to Checkout
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
     </motion.div>
   );
 }

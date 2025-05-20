@@ -49,16 +49,38 @@ const generatePDFReceipt = (receiptData) => {
   doc.fontSize(20).fillColor('#4CAF50').text('Receipt', { align: 'center' });
   doc.moveDown(2);
 
-  // Add user and product details with styling
+  // Add user details with styling
   doc.fontSize(14).fillColor('#000000')
      .text(`Purchased By: ${receiptData.userName}`, { underline: true });
   doc.moveDown();
-  doc.text(`Product: ${receiptData.productName}`);
-  doc.text(`Quantity: ${receiptData.quantity}`);
-  doc.text(`Price: ₱${receiptData.productPrice.toFixed(2)}`);
-  doc.text(`Total Price: ₱${receiptData.totalPrice.toFixed(2)}`);
+
+  // Handle multiple products or single product
+  if (receiptData.isMultipleProducts) {
+    // Display multiple products
+    doc.fontSize(14).text('Items Purchased:', { underline: true });
+    doc.moveDown();
+
+    // Create a table-like structure for products
+    receiptData.products.forEach((product, index) => {
+      doc.fontSize(12)
+         .text(`${index + 1}. ${product.name}`)
+         .text(`   Quantity: ${product.quantity}`)
+         .text(`   Price: ₱${product.price.toFixed(2)}`)
+         .text(`   Subtotal: ₱${product.totalPrice.toFixed(2)}`);
+      doc.moveDown(0.5);
+    });
+  } else {
+    // Display single product
+    doc.text(`Product: ${receiptData.productName}`);
+    doc.text(`Quantity: ${receiptData.quantity}`);
+    doc.text(`Price: ₱${receiptData.productPrice.toFixed(2)}`);
+  }
+
+  // Add total price and payment method
+  doc.moveDown();
+  doc.fontSize(14).text(`Total Price: ₱${receiptData.totalPrice.toFixed(2)}`, { underline: true });
   doc.text(`Payment Method: ${receiptData.paymentMethod}`);
-  
+
   // Add border and some more visual separation
   doc.moveDown();
   doc.rect(50, doc.y, 500, 2).fill('#4CAF50');  // Green separator line
@@ -77,6 +99,33 @@ const generatePDFReceipt = (receiptData) => {
 
 // Helper function to send email with both HTML content and receipt attachment
 const sendEmailWithAttachment = async (email, filePath, receiptData) => {
+  // Generate table rows based on whether it's a single product or multiple products
+  let productRows = '';
+
+  if (receiptData.isMultipleProducts) {
+    // Multiple products
+    receiptData.products.forEach(product => {
+      productRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${product.name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${product.quantity}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">₱${product.price.toFixed(2)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">₱${product.totalPrice.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+  } else {
+    // Single product
+    productRows = `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;">${receiptData.productName}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${receiptData.quantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">₱${receiptData.productPrice.toFixed(2)}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">₱${receiptData.totalPrice.toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
   const htmlContent = `
     <html>
       <body style="font-family: Arial, sans-serif; color: #333;">
@@ -90,13 +139,9 @@ const sendEmailWithAttachment = async (email, filePath, receiptData) => {
             <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
             <th style="padding: 8px; border: 1px solid #ddd;">Total Price</th>
           </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;">${receiptData.productName}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${receiptData.quantity}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">₱${receiptData.productPrice.toFixed(2)}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">₱${receiptData.totalPrice.toFixed(2)}</td>
-          </tr>
+          ${productRows}
         </table>
+        <p style="margin-top: 20px; font-weight: bold;">Total Amount: ₱${receiptData.totalPrice.toFixed(2)}</p>
         <p style="margin-top: 20px;">Payment Method: ${receiptData.paymentMethod}</p>
         <p style="margin-top: 20px;">Transaction ID: ${receiptData.transactionId}</p>
         <p style="margin-top: 20px;">Transaction Date: ${receiptData.transactionDate}</p>
@@ -148,23 +193,49 @@ const uploadToGoogleDrive = async (filePath) => {
 
 // Receipt Controller
 const createReceipt = async (req, res) => {
-  const { product, quantity, totalPrice, paymentMethod, user, transactionId, transactionDate } = req.body;
+  const {
+    product,
+    products,
+    quantity,
+    totalPrice,
+    paymentMethod,
+    user,
+    transactionId,
+    transactionDate,
+    isMultipleProducts
+  } = req.body;
 
-  // Validate data
-  if (!product || !quantity || !totalPrice || !paymentMethod || !user || !transactionId || !transactionDate) {
-    return res.status(400).send({ message: 'Missing required fields' });
+  // Validate data based on whether it's a single product or multiple products
+  if (isMultipleProducts) {
+    // Multiple products validation
+    if (!products || !Array.isArray(products) || products.length === 0 || !totalPrice || !paymentMethod || !user || !transactionId || !transactionDate) {
+      return res.status(400).send({ message: 'Missing required fields for multiple products' });
+    }
+  } else {
+    // Single product validation
+    if (!product || !quantity || !totalPrice || !paymentMethod || !user || !transactionId || !transactionDate) {
+      return res.status(400).send({ message: 'Missing required fields for single product' });
+    }
   }
 
-  const receiptData = {
+  // Create receipt data object
+  let receiptData = {
     userName: `${user.firstname} ${user.lastname}`,
-    productName: product.name,
-    quantity: quantity,
-    productPrice: product.price,
     totalPrice: totalPrice,
     paymentMethod: paymentMethod,
     transactionId: transactionId,
     transactionDate: transactionDate,
+    isMultipleProducts: isMultipleProducts
   };
+
+  // Add product-specific data based on whether it's a single product or multiple products
+  if (isMultipleProducts) {
+    receiptData.products = products;
+  } else {
+    receiptData.productName = product.name;
+    receiptData.quantity = quantity;
+    receiptData.productPrice = product.price;
+  }
 
   try {
     // Generate PDF receipt

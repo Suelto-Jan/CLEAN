@@ -12,6 +12,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 
 
+
 dotenv.config();
 
 // Set up storage for multer
@@ -25,7 +26,7 @@ const upload = multer({ storage: storage });
  const createToken = (id, email, expiresIn = '1d') => {
   const jwtSecretKey = process.env.JWT_SECRET_KEY;
   return jwt.sign({ id, email }, jwtSecretKey,{ expiresIn });
-  
+
 };
 
 // Configure nodemailer transporter
@@ -56,20 +57,35 @@ export const sendVerificationEmail = (email, verificationToken) => {
 
 
 export const registerUser = async (req, res) => {
-  const { firstname, lastname, email, pin, recaptchaToken } = req.body;
-  const image = req.file;
+  const { firstname, lastname, email, pin,  image } = req.body;
 
-  if (!firstname || !lastname || !email || !pin || !recaptchaToken) {
+  // Validate required fields
+  if (!firstname || !lastname || !email || !pin ) {
+    // Check which fields are missing
+    const missingFields = [];
+    if (!firstname) missingFields.push("First Name");
+    if (!lastname) missingFields.push("Last Name");
+    if (!email) missingFields.push("Email");
+    if (!pin) missingFields.push("PIN");
+
+
     return res.status(400).json({
-      message: "All fields (firstname, lastname, email, pin, recaptchaToken) are required.",
+      message: `Please fill in all required fields: ${missingFields.join(", ")}.`,
+    });
+  }
+
+  // Validate PIN (must be 6 digits)
+  if (!/^\d{6}$/.test(pin)) {
+    return res.status(400).json({
+      message: "PIN must be exactly 6 digits.",
     });
   }
 
   // Restrict email to buksu.edu.ph or student.buksu.edu.ph domains only
   const allowedDomains = ["buksu.edu.ph", "student.buksu.edu.ph"];
-  const emailDomain = email.split("@")[1];
+  const emailParts = email.split("@");
 
-  if (!allowedDomains.includes(emailDomain)) {
+  if (emailParts.length !== 2 || !allowedDomains.includes(emailParts[1])) {
     return res.status(400).json({
       message: "Only emails from buksu.edu.ph or student.buksu.edu.ph are allowed.",
     });
@@ -79,23 +95,8 @@ export const registerUser = async (req, res) => {
   try {
     session.startTransaction();
 
-    // Verify reCAPTCHA token
-    const recaptchaVerificationResponse = await axios.post(
-      "https://www.google.com/recaptcha/api/siteverify",
-      null,
-      {
-        params: {
-          secret: process.env.RECAPTCHA_SECRET_KEY,
-          response: recaptchaToken,
-        },
-        timeout: 5000,
-      }
-    );
 
-    if (!recaptchaVerificationResponse.data.success) {
-      console.error("reCAPTCHA verification failed:", recaptchaVerificationResponse.data);
-      return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
-    }
+
 
     // Check if the email already exists
     const existingUser = await UserModel.findOne({ email });
@@ -114,7 +115,7 @@ export const registerUser = async (req, res) => {
       pin: hashedPin,
       isAdmin: false,
       isVerified: false,
-      image: image ? image.path : null,
+      image: image || null,
     });
 
     // Generate and attach a verification token
@@ -123,9 +124,9 @@ export const registerUser = async (req, res) => {
 
     // Save the user to the database
     await newUser.save({ session });
-    console.log("reCAPTCHA token (backend):", recaptchaToken);
 
-    // Commit transaction 
+
+    // Commit transaction
     await session.commitTransaction();
     console.log("User registered successfully:", newUser.email);
 
@@ -194,8 +195,8 @@ export const verifyEmail = async (req, res) => {
     res.status(500).send({ message: "There was an error verifying the email." });
   }
 }
-  
-  
+
+
 
 // Login user (validate PIN)
 export const loginUser = async (req, res) => {
@@ -203,6 +204,11 @@ export const loginUser = async (req, res) => {
 
   if (!email || !pin) {
     return res.status(400).json({ message: 'Email and PIN are required.' });
+  }
+
+  // Validate PIN format (must be 6 digits)
+  if (!/^\d{6}$/.test(pin)) {
+    return res.status(400).json({ message: 'PIN must be exactly 6 digits.' });
   }
 
   try {
@@ -255,14 +261,14 @@ export const loginUser = async (req, res) => {
 
 
 // Get all users
-export const getUsers = async (req, res) => {
+export const getUsers = async (_, res) => {
   try {
     // Fetch users who are verified and not admins
-    const users = await UserModel.find({ 
+    const users = await UserModel.find({
       isAdmin: { $ne: true },   // Exclude admins
       isVerified: true           // Include only verified users
     });
-    
+
     res.status(200).json(users); // Send the filtered users in the response
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users', error: error.message });
@@ -285,36 +291,21 @@ export const getUserById = async (req, res) => {
 // Update user information
 export const updateUser = async (req, res) => {
   try {
-    console.log('Incoming Request Params:', req.params);
     const { id } = req.params;
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log('Invalid or missing user ID');
       return res.status(400).json({ message: 'Invalid or missing user ID.' });
     }
-
-    const updateData = { ...req.body };
-
-    if (req.file) {
-      updateData.image = req.file.path;
-    }
-
+    const updateData = { ...req.body }; // image is now a URL
     if (updateData.pin) {
       const hashedPin = await bcrypt.hash(updateData.pin, 10);
       updateData.pin = hashedPin;
     }
-
-    console.log('Update Data:', updateData);
-
     const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedUser) {
-      console.log('User not found');
       return res.status(404).json({ message: 'User not found.' });
     }
-
     res.status(200).json({ message: 'User updated successfully', user: updatedUser });
   } catch (error) {
-    console.error('Error updating user:', error);
     res.status(500).json({ message: 'Error updating user.', error: error.message });
   }
 };
@@ -456,36 +447,29 @@ export const updateLoggedInUser = async (req, res) => {
     if (!token) {
       return res.status(401).json({ message: 'Authorization token is missing.' });
     }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const userId = decoded.id;
-
     const updateData = {};
     if (req.body.firstname?.trim()) updateData.firstname = req.body.firstname;
     if (req.body.lastname?.trim()) updateData.lastname = req.body.lastname;
-    if (req.file) updateData.image = req.file.path;
+    if (req.body.image) updateData.image = req.body.image; // Cloudinary URL
     if (req.body.pin?.trim()) {
       const hashedPin = await bcrypt.hash(req.body.pin, 10);
       updateData.pin = hashedPin;
     }
-
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: 'No valid fields provided for update.' });
     }
-
     const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true });
-
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
     res.status(200).json({ message: 'User updated successfully', user: updatedUser });
   } catch (error) {
-    console.error('Error updating user:', error);
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Invalid token.' });
     }
-    res.status(500).json({ message: 'Error updating user.', error: error.message });
+    res.status(500).json({ message: 'Failed to update user.', error: error.message });
   }
 };
 
@@ -517,7 +501,7 @@ export const forgotPin = async (req, res) => {
         rejectUnauthorized: false, // This allows self-signed certificates
       },
     });
-    
+
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -542,7 +526,7 @@ export const forgotPin = async (req, res) => {
 
 
 export const resetPin = async (req, res) => {
-  const { token, newPin } = req.body;
+  const { token } = req.body;
 
   try {
     // Verify the reset token

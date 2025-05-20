@@ -240,9 +240,9 @@ function ForgotPin() {
               padding: "12px 24px",
               borderRadius: "12px",
               textTransform: "none",
-              background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+              transition: "all 0.3s ease",
               "&:hover": {
-                background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                transform: "translateY(-2px)",
               },
             }}
           >

@@ -59,8 +59,7 @@
 
   // Update Admin Profile
   export const updateAdminProfile = async (req, res) => {
-    const { firstname, lastname, email, pin } = req.body;
-    const image = req.file?.path; // Assuming you're using Multer for file uploads
+    const { firstname, lastname, email, pin, image } = req.body; // image is now a URL
   
     try {
       // Ensure the authenticated admin's ID is available
@@ -79,6 +78,7 @@
       if (firstname) admin.firstname = firstname;
       if (lastname) admin.lastname = lastname;
       if (email) admin.email = email;
+      if (image) admin.image = image; // Save Cloudinary URL
   
       if (pin) {
         // Validate the pin (e.g., minimum length)
@@ -90,8 +90,6 @@
         const hashedPin = await bcrypt.hash(pin, 10);
         admin.pin = hashedPin;
       }
-  
-      if (image) admin.image = image;
   
       // Save the updated admin profile
       await admin.save();

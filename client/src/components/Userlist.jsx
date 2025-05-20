@@ -28,6 +28,9 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  Card,
+  CardContent,
+  Grid,
 } from "@mui/material";
 import { Person as PersonIcon, Search as SearchIcon, Close as CloseIcon } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
@@ -158,286 +161,323 @@ function UserList() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      style={{ padding: "30px", backgroundColor: "#f4f6f9", minHeight: "100vh" }}
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
+        padding: "30px",
+      }}
     >
-      <Typography
-        variant="h5"
-        gutterBottom
+      <Box
         sx={{
-          fontWeight: "600",
-          color: "#333",
-          marginBottom: "24px",
-          background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          maxWidth: "1400px",
+          margin: "0 auto",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          borderRadius: "24px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+          backdropFilter: "blur(10px)",
+          padding: "30px",
         }}
       >
-        User Management
-      </Typography>
-
-      {/* Search Bar */}
-      <motion.div variants={itemVariants}>
-        <TextField
-          label="Search Users"
-          variant="outlined"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          fullWidth
-          size="small"
+        <Typography
+          variant="h4"
           sx={{
-            maxWidth: isMobile ? "100%" : "400px",
-            marginBottom: "24px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </motion.div>
-
-      {/* Users Table */}
-      <motion.div variants={itemVariants}>
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{
-            borderRadius: "16px",
-            overflow: "hidden",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            backgroundColor: "white",
+            fontWeight: "600",
+            marginBottom: "30px",
+            background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
           }}
         >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: "#f8f9fa" }}>
-                <TableCell sx={{ fontWeight: "600" }}>#</TableCell>
-                <TableCell sx={{ fontWeight: "600" }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: "600" }}>Email</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "600" }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUsers.map((user, index) => (
-                <TableRow
-                  key={user._id}
-                  hover
+          User Management
+        </Typography>
+
+        <motion.div variants={itemVariants}>
+          <TextField
+            label="Search Users"
+            variant="outlined"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            fullWidth
+            size="small"
+            sx={{
+              maxWidth: isMobile ? "100%" : "400px",
+              marginBottom: "24px",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </motion.div>
+
+        <Grid container spacing={3}>
+          {filteredUsers.map((user) => (
+            <Grid item xs={12} sm={6} md={4} key={user._id}>
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                style={{ height: "100%" }}
+              >
+                <Card
                   sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     transition: "all 0.3s ease",
                     "&:hover": {
-                      backgroundColor: "#f8f9fa",
-                      transform: "translateY(-2px)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                     },
                   }}
                 >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() => handleOpenUserDetails(user)}
+                  <Box
+                    sx={{
+                      padding: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "15px",
+                    }}
+                  >
+                    <Avatar
+                      src={user.image ? (user.image.startsWith('http') ? user.image : `http://localhost:8000/${user.image}`) : ''}
+                      alt={`${user.firstname} ${user.lastname}`}
                       sx={{
-                        textTransform: "none",
-                        color: "#1a2a6c",
-                        fontWeight: "600",
-                        "&:hover": {
-                          color: "#b21f1f",
-                        },
+                        width: 80,
+                        height: 80,
+                        border: "3px solid #1a2a6c",
                       }}
-                    >
-                      {user.firstname} {user.lastname}
-                    </Button>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="View Profile">
-                      <Button
-                        variant="outlined"
-                        onClick={() => handleOpenUserDetails(user)}
-                        startIcon={<PersonIcon />}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="h6"
                         sx={{
-                          borderRadius: "12px",
-                          textTransform: "none",
-                          borderColor: "#1a2a6c",
-                          color: "#1a2a6c",
-                          "&:hover": {
-                            backgroundColor: "#1a2a6c",
-                            color: "white",
-                          },
+                          fontWeight: "600",
+                          color: "#333",
+                          marginBottom: "4px",
                         }}
                       >
-                        Profile
-                      </Button>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </motion.div>
+                        {user.firstname} {user.lastname}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#666",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        {user.email}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: user.isVerified ? "#4caf50" : "#f44336",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {user.isVerified ? "Verified" : "Not Verified"}
+                      </Typography>
+                    </Box>
+                  </Box>
 
-      {/* User Details Dialog */}
-      <Dialog
-        open={openUserDetails}
-        onClose={handleCloseUserDetails}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "16px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-          },
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center",
-          pb: 2,
-          borderBottom: "1px solid #eee"
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: "600" }}>
-            User Profile
-          </Typography>
-          <IconButton
-            onClick={handleCloseUserDetails}
-            sx={{
-              color: "grey.500",
-              "&:hover": {
-                color: "error.main",
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {selectedUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Box sx={{ textAlign: "center", mb: 3 }}>
-                <Avatar
-                  alt="User Profile"
-                  src={selectedUser.image ? `http://localhost:8000/${selectedUser.image}` : "/default-avatar.png"}
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    margin: "auto",
-                    mb: 2,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    border: "4px solid #1a2a6c",
-                  }}
-                />
-                <Typography variant="h6" sx={{ fontWeight: "600", mb: 1 }}>
-                  {selectedUser.firstname} {selectedUser.lastname}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedUser.email}
-                </Typography>
-              </Box>
+                  <Divider />
 
-              <Divider sx={{ my: 3 }} />
-
-              <Typography variant="h6" sx={{ fontWeight: "600", mb: 2, color: "#1a2a6c" }}>
-                Paid Transactions
-              </Typography>
-              <List>
-                {transactions.paid.length > 0 ? (
-                  transactions.paid.map((item, index) => (
-                    <ListItem
-                      key={index}
+                  <Box
+                    sx={{
+                      padding: "15px",
+                      display: "flex",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={() => handleOpenUserDetails(user)}
                       sx={{
-                        borderRadius: "8px",
-                        mb: 1,
+                        backgroundColor: "#1a2a6c",
+                        color: "white",
+                        borderRadius: "12px",
                         "&:hover": {
-                          backgroundColor: "#f8f9fa",
+                          backgroundColor: "#b21f1f",
                         },
                       }}
                     >
-                      <ListItemText
-                        primary={item.name}
-                        secondary={`₱${item.price}`}
-                        primaryTypographyProps={{ fontWeight: "500" }}
-                      />
-                    </ListItem>
-                  ))
-                ) : (
-                  <Typography color="text.secondary">No Paid Transactions</Typography>
-                )}
-              </List>
+                      View Details
+                    </Button>
+                  </Box>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
 
-              <Typography variant="h6" sx={{ fontWeight: "600", mb: 2, mt: 3, color: "#1a2a6c" }}>
-                Pay Later Transactions
-              </Typography>
-              <List>
-                {transactions.payLater.length > 0 ? (
-                  transactions.payLater.map((item, index) => (
-                    <ListItem
-                      key={index}
-                      sx={{
-                        borderRadius: "8px",
-                        mb: 1,
-                        "&:hover": {
-                          backgroundColor: "#f8f9fa",
-                        },
-                      }}
-                    >
-                      <ListItemText
-                        primary={item.name}
-                        secondary={`₱${item.price}`}
-                        primaryTypographyProps={{ fontWeight: "500" }}
-                      />
-                    </ListItem>
-                  ))
-                ) : (
-                  <Typography color="text.secondary">No Pay Later Transactions</Typography>
-                )}
-              </List>
-            </motion.div>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button
-            onClick={handleCloseUserDetails}
-            sx={{
-              borderRadius: "12px",
-              textTransform: "none",
-              px: 3,
-              "&:hover": {
-                backgroundColor: "#f8f9fa",
-              },
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="error"
-          sx={{
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        {/* User Details Dialog */}
+        <Dialog
+          open={openUserDetails}
+          onClose={handleCloseUserDetails}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: "16px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+            },
           }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+          {selectedUser && (
+            <>
+              <DialogTitle
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  padding: "20px",
+                }}
+              >
+                <Avatar
+                  src={selectedUser.image ? (selectedUser.image.startsWith('http') ? selectedUser.image : `http://localhost:8000/${selectedUser.image}`) : ''}
+                  alt={`${selectedUser.firstname} ${selectedUser.lastname}`}
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    border: "3px solid #1a2a6c",
+                  }}
+                />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: "600" }}>
+                    {selectedUser.firstname} {selectedUser.lastname}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedUser.email}
+                  </Typography>
+                </Box>
+              </DialogTitle>
+
+              <DialogContent dividers>
+                <Box sx={{ padding: "20px" }}>
+                  <Typography variant="h6" sx={{ marginBottom: "20px", fontWeight: "600" }}>
+                    Transaction History
+                  </Typography>
+
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: "12px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "#4caf50",
+                              marginBottom: "15px",
+                              fontWeight: "600",
+                            }}
+                          >
+                            Paid Items
+                          </Typography>
+                          <List>
+                            {transactions.paid.map((item) => (
+                              <ListItem
+                                key={item._id}
+                                sx={{
+                                  borderBottom: "1px solid #f0f0f0",
+                                  padding: "10px 0",
+                                }}
+                              >
+                                <ListItemText
+                                  primary={item.name}
+                                  secondary={`₱${item.price.toFixed(2)}`}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: "12px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "#ff9800",
+                              marginBottom: "15px",
+                              fontWeight: "600",
+                            }}
+                          >
+                            Pay Later Items
+                          </Typography>
+                          <List>
+                            {transactions.payLater.map((item) => (
+                              <ListItem
+                                key={item._id}
+                                sx={{
+                                  borderBottom: "1px solid #f0f0f0",
+                                  padding: "10px 0",
+                                }}
+                              >
+                                <ListItemText
+                                  primary={item.name}
+                                  secondary={`₱${item.price.toFixed(2)}`}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </DialogContent>
+
+              <DialogActions sx={{ padding: "20px" }}>
+                <Button
+                  onClick={handleCloseUserDetails}
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "8px 20px",
+                  }}
+                >
+                  Close
+                </Button>
+              </DialogActions>
+            </>
+          )}
+        </Dialog>
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="error"
+            sx={{
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
     </motion.div>
   );
 }

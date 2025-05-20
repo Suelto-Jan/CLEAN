@@ -1,24 +1,12 @@
 import express from 'express';
-import multer from 'multer';
 import { getAdminProfile, updateAdminProfile, deleteAdmin ,adminLogin ,verifyAdminToken} from '../Controller/adminController.js';
 import authenticateToken from '../Middleware/authenticate.js';
 
 const router = express.Router();
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Adjust the path to your uploads folder
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
-});
-const upload = multer({ storage });
-
 // Admin routes
-router.get('/admin/profile', verifyAdminToken, getAdminProfile); 
-router.put('/admin', upload.single('image'), verifyAdminToken,updateAdminProfile);
+router.get('/admin/profile', verifyAdminToken, getAdminProfile);
+router.put('/admin', verifyAdminToken, updateAdminProfile);
 router.delete('/admin', deleteAdmin); // Delete admin account (optional)
 router.post('/admin/login', adminLogin);
 router.get('/admin/token', authenticateToken, (req, res) => {

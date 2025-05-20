@@ -30,14 +30,14 @@ const HomePage = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className={styles.homepageContainer}
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       {/* Header Section */}
-      <motion.header 
+      <motion.header
         className={styles.header}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -87,16 +87,16 @@ const HomePage = () => {
           className={styles.logos}
           variants={itemVariants}
         >
-          <motion.img 
-            src={logo1} 
-            alt="University Logo" 
+          <motion.img
+            src={logo1}
+            alt="University Logo"
             className={styles.logoImg}
             whileHover={{ scale: 1.1, rotateY: 10 }}
             transition={{ duration: 0.3 }}
           />
-          <motion.img 
-            src={logo2} 
-            alt="College Logo" 
+          <motion.img
+            src={logo2}
+            alt="College Logo"
             className={styles.logoImg}
             whileHover={{ scale: 1.1, rotateY: -10 }}
             transition={{ duration: 0.3 }}
@@ -131,7 +131,7 @@ const HomePage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1 }}
       >
-        <motion.p 
+        <motion.p
           className={styles.footerText}
           variants={itemVariants}
         >

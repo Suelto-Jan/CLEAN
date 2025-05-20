@@ -33,12 +33,12 @@ function ThankYou() {
 
   const baseURL = 'http://localhost:8000';
   // Retrieve purchase details from location.state or fallback to localStorage
-  const { product, quantity, totalPrice, paymentMethod, user } =
+  const { product, cartItems, quantity, totalPrice, paymentMethod, user, isMultipleProducts, receiptUrl } =
     location.state || JSON.parse(localStorage.getItem('lastPurchase')) || {};
 
   useEffect(() => {
     // If state is missing, check localStorage for fallback data
-    if (!product || !user) {
+    if ((!product && !cartItems) || !user) {
       const fallbackData = JSON.parse(localStorage.getItem('lastPurchase'));
       if (!fallbackData) {
         // Redirect to home if no fallback data
@@ -48,10 +48,19 @@ function ThankYou() {
       // Save current purchase details in localStorage for backup
       localStorage.setItem(
         'lastPurchase',
-        JSON.stringify({ product, quantity, totalPrice, paymentMethod, user })
+        JSON.stringify({
+          product,
+          cartItems,
+          quantity,
+          totalPrice,
+          paymentMethod,
+          user,
+          isMultipleProducts,
+          receiptUrl
+        })
       );
     }
-  }, [product, user, quantity, totalPrice, paymentMethod, navigate]);
+  }, [product, cartItems, user, quantity, totalPrice, paymentMethod, isMultipleProducts, receiptUrl, navigate]);
 
   // Logout function
   const handleLogout = () => {
@@ -83,7 +92,7 @@ function ThankYou() {
   };
 
   // If no valid data is found, show the error
-  if (!product || !user) {
+  if ((!product && !cartItems) || !user) {
     return (
       <motion.div
         initial="hidden"
@@ -279,28 +288,7 @@ function ThankYou() {
               Receipt
             </Typography>
 
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                mb: 3,
-              }}
-            >
-              <motion.img
-                src={`${baseURL}/${product.image?.replace(/\\/g, '/')}`}
-                alt={product.name}
-                style={{
-                  width: "100%",
-                  maxWidth: "200px",
-                  objectFit: "contain",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              />
-            </Box>
-
+            {/* Customer Information */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6}>
                 <Typography variant="subtitle1" fontWeight="600">
@@ -314,49 +302,148 @@ function ThankYou() {
               </Grid>
               <Grid item xs={6}>
                 <Typography variant="subtitle1" fontWeight="600">
-                  Product:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">{product.name}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Quantity:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">{quantity}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Price:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">
-                  ₱{product.price.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
-                  Total Price:
-                </Typography>
-              </Grid>
-              <Grid item xs={6} sx={{ textAlign: "right" }}>
-                <Typography color="text.secondary">
-                  ₱{totalPrice.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="subtitle1" fontWeight="600">
                   Payment Method:
                 </Typography>
               </Grid>
               <Grid item xs={6} sx={{ textAlign: "right" }}>
                 <Typography color="text.secondary">{paymentMethod}</Typography>
               </Grid>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+              </Grid>
             </Grid>
+
+            {/* Single Product Purchase */}
+            {product && !isMultipleProducts && (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mb: 3,
+                  }}
+                >
+                  <motion.img
+                    src={product.image}
+                    alt={product.name}
+                    style={{
+                      width: "100%",
+                      maxWidth: "200px",
+                      objectFit: "contain",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </Box>
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" fontWeight="600">
+                      Product:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: "right" }}>
+                    <Typography color="text.secondary">{product.name}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" fontWeight="600">
+                      Quantity:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: "right" }}>
+                    <Typography color="text.secondary">{quantity}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" fontWeight="600">
+                      Price:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: "right" }}>
+                    <Typography color="text.secondary">
+                      ₱{product.price.toFixed(2)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" fontWeight="600">
+                      Total Price:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: "right" }}>
+                    <Typography color="text.secondary">
+                      ₱{totalPrice.toFixed(2)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+
+            {/* Multiple Products Purchase */}
+            {cartItems && isMultipleProducts && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: "600", color: "#1a2a6c" }}>
+                  Items Purchased:
+                </Typography>
+
+                {cartItems.map((item, index) => (
+                  <Card key={index} sx={{ mb: 2, borderRadius: "12px", overflow: "hidden" }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Box sx={{ width: "60px", height: "60px", mr: 2 }}>
+                          <img
+                            src={item.product.image}
+                            alt={item.product.name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "8px"
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="600">
+                            {item.product.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {item.quantity} x ₱{item.product.price.toFixed(2)} = ₱{(item.product.price * item.quantity).toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="600">
+                    Total Price:
+                  </Typography>
+                  <Typography variant="subtitle1" fontWeight="600" color="#1a2a6c">
+                    ₱{totalPrice.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {/* Receipt Link */}
+            {receiptUrl && (
+              <Box sx={{ textAlign: "center", mb: 3 }}>
+                <Button
+                  variant="outlined"
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    padding: "8px 16px",
+                  }}
+                >
+                  View Receipt PDF
+                </Button>
+              </Box>
+            )}
 
             <Divider sx={{ my: 3 }} />
 
@@ -379,13 +466,13 @@ function ThankYou() {
                 startIcon={<ShoppingCart />}
                 onClick={() => navigate('/scan')}
                 sx={{
-                  background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                  "&:hover": {
-                    background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
-                  },
                   borderRadius: "12px",
                   textTransform: "none",
                   padding: "12px 24px",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 Scan Another Product

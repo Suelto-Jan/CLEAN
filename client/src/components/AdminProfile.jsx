@@ -15,10 +15,12 @@ import {
   Tooltip,
   CircularProgress,
   useTheme,
+  Divider,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { PhotoCamera, Save, ArrowBack } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { uploadToCloudinary } from "../config/cloudinary";
 
 function AdminProfile() {
   const [admin, setAdmin] = useState(null);
@@ -95,18 +97,27 @@ function AdminProfile() {
     e.preventDefault();
     setSaving(true);
 
-    const form = new FormData();
-    form.append("firstname", formData.firstname);
-    form.append("lastname", formData.lastname);
-    form.append("email", formData.email);
-    if (formData.pin) form.append("pin", formData.pin);
-    if (formData.image) form.append("image", formData.image);
-
     try {
+      let imageUrl = admin?.image;
+
+      if (formData.image && formData.image instanceof File) {
+        imageUrl = await uploadToCloudinary(formData.image);
+      }
+
+      const updateData = {
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        image: imageUrl,
+      };
+
+      if (formData.pin) {
+        updateData.pin = formData.pin;
+      }
+
       const token = localStorage.getItem("token");
-      await axios.put("http://localhost:8000/api/admin", form, {
+      await axios.put("http://localhost:8000/api/admin", updateData, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -175,17 +186,25 @@ function AdminProfile() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      style={{ minHeight: "100vh", padding: "24px" }}
+      style={{
+        minHeight: "100vh",
+        padding: 0,
+        background: "linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          width: "100%",
           minHeight: "100vh",
-          backgroundColor: "#f4f5f7",
-          padding: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,0.15)",
           position: "relative",
+          py: { xs: 2, md: 6 },
         }}
       >
         {/* Back Button */}
@@ -193,7 +212,7 @@ function AdminProfile() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          style={{ position: "absolute", top: 20, left: 20 }}
+          style={{ position: "absolute", top: 32, left: 32, zIndex: 2 }}
         >
           <Tooltip title="Go Back">
             <IconButton
@@ -217,12 +236,12 @@ function AdminProfile() {
           component={motion.div}
           variants={itemVariants}
           sx={{
-            maxWidth: 480,
+            maxWidth: 500,
             width: "100%",
-            boxShadow: "0px 8px 20px rgba(0,0,0,0.1)",
-            borderRadius: "16px",
-            backgroundColor: "#fff",
-            padding: 3,
+            boxShadow: "0px 12px 32px rgba(26,42,108,0.15)",
+            borderRadius: "24px",
+            background: "rgba(255,255,255,0.98)",
+            padding: { xs: 2, md: 4 },
             position: "relative",
             overflow: "hidden",
           }}
@@ -232,21 +251,22 @@ function AdminProfile() {
               display="flex"
               flexDirection="column"
               alignItems="center"
-              marginBottom={3}
+              mb={2}
             >
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.97 }}
                 style={{ position: "relative" }}
               >
                 <Avatar
                   src={imagePreview}
                   alt="Admin Profile"
                   sx={{
-                    width: 120,
-                    height: 120,
-                    border: "4px solid #1a2a6c",
-                    boxShadow: "0px 6px 12px rgba(0,0,0,0.2)",
+                    width: 130,
+                    height: 130,
+                    border: "5px solid #1a2a6c",
+                    boxShadow: "0px 8px 24px rgba(26,42,108,0.15)",
+                    background: "#f4f5f7",
                   }}
                 />
                 <input
@@ -280,114 +300,110 @@ function AdminProfile() {
                 </label>
               </motion.div>
               <Typography
-                variant="h5"
+                variant="h4"
                 align="center"
                 fontWeight="bold"
                 gutterBottom
                 sx={{
-                  color: "#333",
-                  marginTop: 2,
-                  background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  color: "#1a2a6c",
+                  mt: 2,
+                  mb: 0.5,
+                  letterSpacing: 1,
                 }}
               >
                 {admin.firstname} {admin.lastname}
               </Typography>
               <Typography
-                variant="body2"
+                variant="subtitle1"
                 align="center"
-                color="textSecondary"
-                gutterBottom
+                color="text.secondary"
+                sx={{ mb: 1 }}
               >
                 {admin.email}
               </Typography>
             </Box>
 
+            <Divider sx={{ my: 2 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#b21f1f",
+                fontWeight: 600,
+                mb: 2,
+                letterSpacing: 1,
+              }}
+            >
+              Profile Details
+            </Typography>
+
             <form onSubmit={handleSubmit}>
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <motion.div variants={itemVariants}>
-                    <TextField
-                      label="First Name"
-                      name="firstname"
-                      value={formData.firstname}
-                      onChange={handleInputChange}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        backgroundColor: "#fff",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                        },
-                      }}
-                    />
-                  </motion.div>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="First Name"
+                    name="firstname"
+                    value={formData.firstname}
+                    onChange={handleInputChange}
+                    fullWidth
+                    size="small"
+                    sx={{
+                      backgroundColor: "#fff",
+                      borderRadius: "12px",
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Last Name"
+                    name="lastname"
+                    value={formData.lastname}
+                    onChange={handleInputChange}
+                    fullWidth
+                    size="small"
+                    sx={{
+                      backgroundColor: "#fff",
+                      borderRadius: "12px",
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <motion.div variants={itemVariants}>
-                    <TextField
-                      label="Last Name"
-                      name="lastname"
-                      value={formData.lastname}
-                      onChange={handleInputChange}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        backgroundColor: "#fff",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                        },
-                      }}
-                    />
-                  </motion.div>
+                  <TextField
+                    label="Email"
+                    name="email"
+                    value={formData.email}
+                    fullWidth
+                    size="small"
+                    sx={{
+                      backgroundColor: "#f4f5f7",
+                      borderRadius: "12px",
+                    }}
+                    InputProps={{ readOnly: true }}
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <motion.div variants={itemVariants}>
-                    <TextField
-                      label="Email"
-                      name="email"
-                      value={formData.email}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        backgroundColor: "#f4f5f7",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                        },
-                      }}
-                      InputProps={{ readOnly: true }}
-                    />
-                  </motion.div>
-                </Grid>
-                <Grid item xs={12}>
-                  <motion.div variants={itemVariants}>
-                    <TextField
-                      label="New PIN (optional)"
-                      name="pin"
-                      type="password"
-                      value={formData.pin}
-                      onChange={handleInputChange}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        backgroundColor: "#fff",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                        },
-                      }}
-                      inputProps={{
-                        maxLength: 6,
-                        pattern: "[0-9]*",
-                        inputMode: "numeric",
-                      }}
-                    />
-                  </motion.div>
+                  <TextField
+                    label="New PIN (optional)"
+                    name="pin"
+                    type="password"
+                    value={formData.pin}
+                    onChange={handleInputChange}
+                    fullWidth
+                    size="small"
+                    sx={{
+                      backgroundColor: "#fff",
+                      borderRadius: "12px",
+                    }}
+                    inputProps={{
+                      maxLength: 6,
+                      pattern: "[0-9]*",
+                      inputMode: "numeric",
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <motion.div
                     variants={itemVariants}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Button
@@ -397,12 +413,17 @@ function AdminProfile() {
                       disabled={saving}
                       startIcon={saving ? <CircularProgress size={20} /> : <Save />}
                       sx={{
-                        background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
-                        color: "white",
-                        padding: "12px",
+                        padding: "12px 24px",
                         borderRadius: "12px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "1rem",
+                        background: "linear-gradient(45deg, #1a2a6c, #b21f1f)",
+                        boxShadow: "0 4px 16px rgba(26,42,108,0.08)",
+                        transition: "all 0.3s ease",
                         "&:hover": {
                           background: "linear-gradient(45deg, #b21f1f, #1a2a6c)",
+                          transform: "translateY(-2px)",
                         },
                       }}
                     >

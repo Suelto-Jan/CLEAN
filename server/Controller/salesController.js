@@ -1,6 +1,6 @@
 import Transaction from '../Models/transaction.js';
 import User from '../Models/user.js';
-
+import Sales from '../Models/sales.js';
 import mongoose from 'mongoose';
 
 export const getTotalSalesDetails = async (req, res) => {
@@ -23,97 +23,116 @@ export const getTotalSalesDetails = async (req, res) => {
     const dateEnd = new Date(selectedDate);
     dateEnd.setHours(23, 59, 59, 999); // End of the selected day
 
-    // Aggregate total sales, paid sales, and pay later sales in one pipeline
-    const salesData = await Transaction.aggregate([
-      {
-        $match: {
-          transactionDate: {
-            $gte: dateStart,
-            $lt: dateEnd,
-          },
-        },
+    // Get all transactions for the day
+    const transactions = await Transaction.find({
+      transactionDate: {
+        $gte: dateStart,
+        $lt: dateEnd,
       },
-      {
-        $facet: {
-          totalSales: [
-            {
-              $project: {
-                totalRevenue: { $sum: '$products.totalPrice' }, // Keep the sum of total price for each transaction
-              },
-            },
-            {
-              $group: {
-                _id: null,
-                total: { $sum: '$totalRevenue' },
-              },
-            },
-          ],
-          paidSales: [
-            { $unwind: '$products' },
-            { $match: { 'products.paymentStatus': 'Paid' } },
-            { $group: { _id: null, total: { $sum: '$products.totalPrice' } } },
-          ],
-          payLaterSales: [
-            { $unwind: '$products' },
-            { $match: { 'products.paymentStatus': 'Pay Later' } },
-            { $group: { _id: null, total: { $sum: '$products.totalPrice' } } },
-          ],
-          salesDetails: [
-            { $unwind: '$products' },
-            {
-              $group: {
-                _id: '$products.name',
-                productId: { $first: '$products.productId' },
-                quantitySold: { $sum: '$products.quantity' },
-                priceSold: { $first: '$products.price' }, // Assuming each product has a price field
-                totalRevenue: { $sum: '$products.totalPrice' },
-                buyerIds: { $addToSet: '$userId' },
-              },
-            },
-            {
-              $lookup: {
-                from: 'users',
-                let: { userIds: '$buyerIds' },
-                pipeline: [
-                  { $match: { $expr: { $in: ['$_id', { $map: { input: '$$userIds', as: 'id', in: { $toObjectId: '$$id' } } }] } } },
-                  { $project: { firstname: 1, _id: 0 } },
-                ],
-                as: 'buyerDetails',
-              },
-            },
-            {
-              $project: {
-                productName: '$_id',
-                quantitySold: '$quantitySold',
-                priceSold: '$priceSold', // Use individual product price
-                totalRevenue: '$totalRevenue',
-                buyers: {
-                  $map: {
-                    input: '$buyerDetails',
-                    as: 'buyer',
-                    in: '$$buyer.firstname',
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-    ]);
+    }).lean();
 
-    console.log('Sales Data:', salesData); // Log the result
+    // Get all user IDs from transactions
+    const userIds = [...new Set(transactions.map(t => t.userId.toString()))];
 
-    // Extracting results from aggregation
-    const totalSales = salesData[0]?.totalSales[0]?.total || 0;
-    const paidSales = salesData[0]?.paidSales[0]?.total || 0;
-    const payLaterSales = salesData[0]?.payLaterSales[0]?.total || 0;
-    const combinedDetails = salesData[0]?.salesDetails || [];
+    // Fetch user details
+    const users = await User.find({
+      _id: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) }
+    }).lean();
+
+    // Create a map of user IDs to user details for quick lookup
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user._id.toString()] = {
+        name: `${user.firstname} ${user.lastname}`,
+        email: user.email
+      };
+    });
+
+    // Process transactions to get detailed sales data
+    let totalSales = 0;
+    let paidSales = 0;
+    let payLaterSales = 0;
+
+    // Create a detailed sales report with user information
+    const userPurchases = {};
+    const productSummary = {};
+
+    transactions.forEach(transaction => {
+      const userId = transaction.userId.toString();
+      const userName = userMap[userId]?.name || 'Unknown User';
+
+      // Initialize user in userPurchases if not exists
+      if (!userPurchases[userId]) {
+        userPurchases[userId] = {
+          userId,
+          userName,
+          email: userMap[userId]?.email || 'Unknown Email',
+          totalSpent: 0,
+          paidAmount: 0,
+          payLaterAmount: 0,
+          products: []
+        };
+      }
+
+      // Process each product in the transaction
+      transaction.products.forEach(product => {
+        // Add to total sales
+        totalSales += product.totalPrice;
+
+        // Add to paid or pay later sales
+        if (product.paymentStatus === 'Paid') {
+          paidSales += product.totalPrice;
+          userPurchases[userId].paidAmount += product.totalPrice;
+        } else {
+          payLaterSales += product.totalPrice;
+          userPurchases[userId].payLaterAmount += product.totalPrice;
+        }
+
+        // Add to user's total spent
+        userPurchases[userId].totalSpent += product.totalPrice;
+
+        // Add product to user's products
+        userPurchases[userId].products.push({
+          name: product.name,
+          price: product.price,
+          quantity: product.quantity,
+          totalPrice: product.totalPrice,
+          paymentStatus: product.paymentStatus
+        });
+
+        // Add to product summary
+        if (!productSummary[product.name]) {
+          productSummary[product.name] = {
+            productName: product.name,
+            quantitySold: 0,
+            priceSold: product.price,
+            totalRevenue: 0,
+            buyers: []
+          };
+        }
+
+        productSummary[product.name].quantitySold += product.quantity;
+        productSummary[product.name].totalRevenue += product.totalPrice;
+
+        // Add buyer to product summary if not already added
+        if (!productSummary[product.name].buyers.includes(userName)) {
+          productSummary[product.name].buyers.push(userName);
+        }
+      });
+    });
+
+    // Convert userPurchases object to array
+    const userPurchasesArray = Object.values(userPurchases);
+
+    // Convert productSummary object to array
+    const salesDetails = Object.values(productSummary);
 
     res.json({
       totalSales,
       paidSales,
       payLaterSales,
-      salesDetails: combinedDetails,
+      salesDetails,
+      userPurchases: userPurchasesArray
     });
   } catch (error) {
     console.error('Error fetching sales details:', error);
