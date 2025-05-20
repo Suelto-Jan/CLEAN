@@ -1,0 +1,31 @@
+{
+  "name": "clean-pos",
+  "version": "1.0.0",
+  "description": "Point of Sale System",
+  "main": "index.js",
+  "scripts": {
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "install": "npm run install-client && npm run install-server",
+    "build-client": "cd client && npm run build",
+    "start-server": "cd server && npm start",
+    "start": "cd server && npm start",
+    "build": "npm run build-client",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "render-build": "npm install && npm run build-client"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "pos",
+    "mern",
+    "react",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

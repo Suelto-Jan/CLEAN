@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import userRoutes from './Routes/userRoutes.js'; 
+import userRoutes from './Routes/userRoutes.js';
 import connectDB from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,8 +27,8 @@ connectDB();
 const port = process.env.PORT || 8000;
 
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
-        ? process.env.CLIENT_URL 
+    origin: process.env.NODE_ENV === 'production'
+        ? [process.env.CLIENT_URL, 'https://clean-pos-frontend.onrender.com']
         : 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],

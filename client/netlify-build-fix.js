@@ -1,8 +1,13 @@
 // This script copies the _redirects file to the build directory
 // Run this after the build process
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Ensure the dist directory exists
 const distDir = path.join(__dirname, 'dist');

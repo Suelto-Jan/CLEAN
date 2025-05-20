@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node netlify-build-fix.js",
+    "build": "vite build",
+    "build:redirects": "node netlify-build-fix.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postbuild": "node netlify-build-fix.js"
+    "netlify-build": "node netlify-deploy.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.1",

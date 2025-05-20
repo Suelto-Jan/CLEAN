@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: clean-pos-backend
+    env: node
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: CLIENT_URL
+        fromService:
+          name: clean-pos-frontend
+          type: web
+          property: url
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+  - type: web
+    name: clean-pos-frontend
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: clean-pos-backend
+          type: web
+          property: url
