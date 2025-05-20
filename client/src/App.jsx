@@ -5,7 +5,7 @@ import HomePage from './components/HomePage';
 import RegisterPage from './components/RegisterPage';
 import AdminLoginPage from './components/AdminLoginPage';
 import LoginSelectionPage from './components/LoginSelection';
-import VerifyPage from './components/VerifyEmail';
+import VerifyEmailPage from './components/VerifyEmail';
 import GoogleCallbackPage from './components/GoogleCallbackPage';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -175,7 +175,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/login-selection" element={<LoginSelectionPage />} />
-            <Route path="/verify-email" element={<VerifyPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/google/callback" element={<GoogleCallbackPage />} />
             <Route path="/scan" element={<ScanPage />} />
             <Route path="/payment" element={<PaymentPage />} />

@@ -10,7 +10,7 @@
     "build:redirects": "node netlify-build-fix.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "netlify-build": "node netlify-deploy.js"
+    "netlify-build": "vite build && node netlify-build-fix.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.1",
