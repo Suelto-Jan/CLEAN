@@ -24,6 +24,7 @@ import {
 import axios from 'axios';
 import bsuLogo from '../images/BSU LOGO.png';
 import cotLogo from '../images/COT.png';
+import config from '../config';
 
 function ThankYou() {
   const location = useLocation();
@@ -31,7 +32,7 @@ function ThankYou() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const baseURL = config.apiUrl;
   // Retrieve purchase details from location.state or fallback to localStorage
   const { product, cartItems, quantity, totalPrice, paymentMethod, user, isMultipleProducts, receiptUrl } =
     location.state || JSON.parse(localStorage.getItem('lastPurchase')) || {};

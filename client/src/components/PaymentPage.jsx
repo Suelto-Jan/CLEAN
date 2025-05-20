@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {Layout,Card,Typography,Button,InputNumber,Radio,Modal,Image,Divider,Space, Row,Col,message,Spin} from 'antd';
 import {ShoppingCartOutlined,DollarCircleOutlined,LeftOutlined, ExclamationCircleOutlined,} from '@ant-design/icons';
+import config from '../config';
 
 const { Content } = Layout;
 
@@ -20,7 +21,7 @@ function PaymentPage() {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
 
-  const baseURL = 'http://localhost:8000';
+  const baseURL = config.apiUrl;
 
   useEffect(() => {
     const fetchedProduct = location.state?.product;
@@ -134,7 +135,7 @@ function PaymentPage() {
 
     try {
       // Make the API request to create the transaction
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/transactions`, {
+      const response = await fetch(`${config.apiUrl}/api/transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
@@ -334,7 +335,7 @@ function PaymentPage() {
             };
           }
 
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/generate-receipt`, {
+          const response = await fetch(`${config.apiUrl}/api/generate-receipt`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -483,7 +484,7 @@ function PaymentPage() {
                 <>
                   <div style={{ textAlign: 'center' }}>
                     <Image
-                      src={product.image ? (product.image.startsWith('http') ? product.image : `${baseURL}/${product.image?.replace(/\\/g, '/')}`) : ''}
+                      src={product.image || ''}
                       alt={product?.name || 'Product Image'}
                       style={{
                         width: '100%',

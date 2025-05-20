@@ -26,6 +26,7 @@ import AdminProfile from "./AdminProfile";
 import axios from "axios";
 import PersonIcon from "@mui/icons-material/Person";
 import { People as PeopleIcon, Inventory2 as InventoryIcon, BarChart as BarChartIcon } from '@mui/icons-material';
+import config from '../config';
 
 
 
@@ -43,20 +44,20 @@ function Dashboard() {
   useEffect(() => {
     const fetchAdminData = async () => {
       const token = localStorage.getItem("token");
-    
+
       if (!token) {
         navigate("/"); // Redirect to login if no token is found
         return;
       }
-    
+
       try {
-        const response = await axios.get("http://localhost:8000/api/admin/profile", {
+        const response = await axios.get(`${config.apiUrl}/api/admin/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-    
+
         // Ensure response.data contains the correct admin details
         console.log("Admin data received:", response.data);
-    
+
         // Make sure you are correctly updating the state with the fetched data
         setAdmin(response.data); // Set the admin data to the state
         setLoading(false); // Set loading state to false after data is fetched
@@ -64,10 +65,10 @@ function Dashboard() {
         console.error("Error fetching admin data:", err);
         navigate("/admin-login"); // Redirect to login if the token is invalid or expired
       }
-    
-    
+
+
     };
-    
+
 
     fetchAdminData();
   }, [navigate]); // This effect depends on navigation changes and will run whenever the page is loaded or token changes
@@ -78,9 +79,9 @@ function Dashboard() {
       try {
         const token = localStorage.getItem("token");
         const [usersRes, productsRes, salesRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("http://localhost:8000/api/products", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("http://localhost:8000/api/total-sales-details", { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${config.apiUrl}/api/users`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${config.apiUrl}/api/products`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${config.apiUrl}/api/total-sales-details`, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         setStats({
           users: usersRes.data.length,
@@ -385,7 +386,7 @@ function Dashboard() {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      
+
       {/* Mobile App Bar */}
       {isMobile && (
         <Box

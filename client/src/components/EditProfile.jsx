@@ -25,6 +25,7 @@ import {
   Person,
 } from '@mui/icons-material';
 import { uploadToCloudinary } from '../config/cloudinary';
+import config from '../config';
 
 function EditProfile() {
   const [user, setUser] = useState({
@@ -52,18 +53,12 @@ function EditProfile() {
       }
 
       try {
-        const response = await axios.get('http://localhost:8000/api/user/me', {
+        const response = await axios.get(`${config.apiUrl}/api/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const fetchedUser = response.data;
         setUser(fetchedUser);
-        setPreviewImage(
-          fetchedUser.image
-            ? fetchedUser.image.startsWith('http')
-              ? fetchedUser.image
-              : `http://localhost:8000/${fetchedUser.image}`
-            : ''
-        );
+        setPreviewImage(fetchedUser.image || '');
         setLoading(false);
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -126,7 +121,7 @@ function EditProfile() {
     };
 
     try {
-      const response = await axios.put('http://localhost:8000/api/user/me', payload, {
+      const response = await axios.put(`${config.apiUrl}/api/user/me`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -361,7 +356,7 @@ function EditProfile() {
     value={pin}
     onChange={(e) => {
       const value = e.target.value;
-      if (/^\d*$/.test(value) && value.length <= 6) { 
+      if (/^\d*$/.test(value) && value.length <= 6) {
         setPin(value);
       }
     }}

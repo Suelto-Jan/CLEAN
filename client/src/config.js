@@ -4,7 +4,7 @@ import { loadRuntimeConfig } from './utils/runtimeConfig.js';
 // Initial config with fallback values
 let config = {
   // Use environment variables in production, fallback to localhost for development
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  apiUrl: import.meta.env.VITE_API_URL || 'https://clean-u8gn.onrender.com'
 };
 
 // Try to load runtime configuration

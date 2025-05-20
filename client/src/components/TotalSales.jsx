@@ -31,6 +31,7 @@ import {
   Paper,
   Tooltip,
 } from '@mui/material';
+import config from '../config';
 import {
   MonetizationOn as MonetizationOnIcon,
   Payment as PaymentIcon,
@@ -87,7 +88,7 @@ function TotalSales() {
     const fetchSalesData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/total-sales-details?date=${selectedDate}`);
+        const response = await fetch(`${config.apiUrl}/api/total-sales-details?date=${selectedDate}`);
         if (!response.ok) {
           throw new Error('Failed to fetch sales data');
         }

@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { uploadToCloudinary } from "../config/cloudinary";
 import { FaBox } from "react-icons/fa";
+import config from '../config';
 
 function ProductList() {
   const [products, setProducts] = useState([]);
@@ -49,7 +50,7 @@ function ProductList() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const API_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api`;
+  const API_BASE_URL = `${config.apiUrl}/api`;
 
   useEffect(() => {
     fetchProducts();
@@ -284,7 +285,7 @@ function ProductList() {
                       }}
                     >
                       <img
-                        src={product.image ? (product.image.startsWith('http') ? product.image : `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/${product.image}`) : '/default-avatar.png'}
+                        src={product.image || '/default-avatar.png'}
                         alt={product.name}
                         style={{
                           width: 80,

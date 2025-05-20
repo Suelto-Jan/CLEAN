@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PhotoCamera, Save, ArrowBack } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { uploadToCloudinary } from "../config/cloudinary";
+import config from '../config';
 
 function AdminProfile() {
   const [admin, setAdmin] = useState(null);
@@ -43,19 +44,19 @@ function AdminProfile() {
     const fetchAdminData = async () => {
       try {
         const token = localStorage.getItem("token");
-  
+
         if (!token) {
           setErrorMessage("Authentication token not found. Please log in.");
           setLoading(false);
           return;
         }
-  
-        const response = await axios.get("http://localhost:8000/api/admin/profile", {
+
+        const response = await axios.get(`${config.apiUrl}/api/admin/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           },
         });
-  
+
         if (response && response.data) {
           setAdmin(response.data);
           setFormData({
@@ -65,7 +66,7 @@ function AdminProfile() {
             pin: "",
             image: null,
           });
-          setImagePreview(response.data.image ? `http://localhost:8000/${response.data.image}` : null);
+          setImagePreview(response.data.image);
         } else {
           setErrorMessage("Failed to fetch admin data.");
         }
@@ -76,7 +77,7 @@ function AdminProfile() {
         setLoading(false);
       }
     };
-  
+
     fetchAdminData();
   }, []);
 
@@ -116,7 +117,7 @@ function AdminProfile() {
       }
 
       const token = localStorage.getItem("token");
-      await axios.put("http://localhost:8000/api/admin", updateData, {
+      await axios.put(`${config.apiUrl}/api/admin`, updateData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

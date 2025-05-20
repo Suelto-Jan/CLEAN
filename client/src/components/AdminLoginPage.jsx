@@ -20,6 +20,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import axios from "axios";
 import bsuLogo from "../images/BSU LOGO.png";
 import cotLogo from "../images/COT.png";
+import config from '../config';
 
 // Theme setup
 const theme = createTheme({
@@ -95,7 +96,7 @@ const AdminLoginPage = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/admin/login`, {
+      const response = await axios.post(`${config.apiUrl}/api/admin/login`, {
         email,
         pin,
       });

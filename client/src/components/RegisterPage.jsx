@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Google from "../images/google.png";
+import config from '../config';
 
 import {
   Box,
@@ -150,8 +151,7 @@ function RegisterPage() {
 
     try {
       setLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const response = await axios.post(`${apiUrl}/api/register`, dataToSend, {
+      const response = await axios.post(`${config.apiUrl}/api/register`, dataToSend, {
         headers: { "Content-Type": "application/json" },
       });
 
@@ -178,9 +178,8 @@ function RegisterPage() {
   };
 
   const googleAuth = () => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
     try {
-      window.open(`${apiUrl}/auth/google`, "_self");
+      window.open(`${config.apiUrl}/auth/google`, "_self");
     } catch (error) {
       setError("Google authentication failed. Please try again.");
     }

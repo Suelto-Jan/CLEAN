@@ -35,6 +35,7 @@ import {
 import { Person as PersonIcon, Search as SearchIcon, Close as CloseIcon } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import config from '../config';
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -52,7 +53,7 @@ function UserList() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/users");
+        const response = await axios.get(`${config.apiUrl}/api/users`);
         const filteredUsers = response.data.filter((user) => !user.isAdmin);
         setUsers(filteredUsers);
       } catch (error) {
@@ -69,7 +70,7 @@ function UserList() {
 
   const fetchTransactionHistory = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/${userId}/transactions`);
+      const response = await axios.get(`${config.apiUrl}/api/${userId}/transactions`);
       setTransactions({ paid: response.data.paid, payLater: response.data.payLater });
     } catch (error) {
       console.error("Error fetching transaction history:", error.message);
@@ -247,7 +248,7 @@ function UserList() {
                     }}
                   >
                     <Avatar
-                      src={user.image ? (user.image.startsWith('http') ? user.image : `http://localhost:8000/${user.image}`) : ''}
+                      src={user.image || ''}
                       alt={`${user.firstname} ${user.lastname}`}
                       sx={{
                         width: 80,
@@ -341,7 +342,7 @@ function UserList() {
                 }}
               >
                 <Avatar
-                  src={selectedUser.image ? (selectedUser.image.startsWith('http') ? selectedUser.image : `http://localhost:8000/${selectedUser.image}`) : ''}
+                  src={selectedUser.image || ''}
                   alt={`${selectedUser.firstname} ${selectedUser.lastname}`}
                   sx={{
                     width: 60,

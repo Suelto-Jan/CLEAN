@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaBox, FaShoppingCart, FaTrash } from 'react-icons/fa';
 import { Grid, Badge } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
+import config from '../config';
 import {
   Box,
   Button,
@@ -82,7 +83,7 @@ function ScanPage() {
     setLoading(true); // Set loading state to true while fetching data
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/${userId}/transactions`);
+      const response = await fetch(`${config.apiUrl}/api/${userId}/transactions`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch transactions');
@@ -158,7 +159,7 @@ function ScanPage() {
     console.log('Attempting to fetch product with barcode:', trimmedBarcode);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products/barcode/${encodeURIComponent(trimmedBarcode)}`);
+      const response = await fetch(`${config.apiUrl}/api/products/barcode/${encodeURIComponent(trimmedBarcode)}`);
 
       if (!response.ok) {
         const errorResponse = await response.json();
@@ -245,7 +246,7 @@ function ScanPage() {
 
   const fetchAvailableProducts = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products`);
+      const response = await fetch(`${config.apiUrl}/api/products`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }
@@ -294,7 +295,7 @@ function ScanPage() {
     console.log('Payload being sent:', payload);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/transactions/pay-later/confirm`, {
+      const response = await fetch(`${config.apiUrl}/api/transactions/pay-later/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -453,7 +454,7 @@ function ScanPage() {
               {user?.image ? (
                 <Box
                   component="img"
-                  src={user.image.startsWith('http') ? user.image : `http://localhost:8000/${user.image}`}
+                  src={user.image}
                   alt="User"
                   sx={{
                     width: 80,
