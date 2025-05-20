@@ -24,7 +24,7 @@ try {
     console.log('Creating .env.production file...');
     fs.writeFileSync(
       envPath,
-      `VITE_API_URL=https://clean-pos-backend.onrender.com\n`
+      `VITE_API_URL=https://clean-u8gn.onrender.com\n`
     );
     console.log('.env.production file created');
   } else {
@@ -49,7 +49,7 @@ try {
 
   // Create a runtime config file that can be loaded by the app
   const runtimeConfig = {
-    apiUrl: process.env.VITE_API_URL || 'https://clean-pos-backend.onrender.com'
+    apiUrl: process.env.VITE_API_URL || 'https://clean-u8gn.onrender.com'
   };
 
   const configPath = path.join(distDir, 'config.json');

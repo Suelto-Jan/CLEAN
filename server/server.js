@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 connectDB();
 
-const port = process.env.PORT || 3454;
+const port = process.env.PORT || 8000;
 
 // More flexible CORS configuration with function to check origin
 const whitelist = [
@@ -32,7 +32,9 @@ const whitelist = [
     'https://clean-pos-frontend.onrender.com',
     'https://682c1cff30ac40008cef192-aquamarine-khapse-67e0d4.netlify.app',
     'https://aquamarine-khapse-67e0d4.netlify.app',
-    'http://localhost:3000'  // Always allow localhost:3000
+    'https://clean-u8gn.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:3454'
 ];
 
 const corsOptions = {

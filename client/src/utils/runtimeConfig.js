@@ -26,7 +26,7 @@ export const loadRuntimeConfig = async () => {
     if (!response.ok) {
       throw new Error('Failed to load runtime configuration');
     }
-    
+
     runtimeConfig = await response.json();
     console.log('Loaded runtime configuration from config.json');
     return runtimeConfig;
@@ -34,7 +34,7 @@ export const loadRuntimeConfig = async () => {
     console.error('Error loading runtime configuration:', error);
     // Fallback to default configuration
     runtimeConfig = {
-      apiUrl: 'https://clean-pos-backend.onrender.com'
+      apiUrl: 'https://clean-u8gn.onrender.com'
     };
     console.log('Using fallback configuration');
     return runtimeConfig;

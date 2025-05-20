@@ -9,4 +9,4 @@
 
 # Environment variables for production
 [context.production.environment]
-  VITE_API_URL = "https://clean-pos-backend.onrender.com"
+  VITE_API_URL = "https://clean-u8gn.onrender.com"

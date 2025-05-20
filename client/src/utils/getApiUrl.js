@@ -10,12 +10,12 @@ export const getApiUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  
+
   // For production, use the Render.com backend URL
   if (import.meta.env.PROD) {
-    return 'https://clean-pos-backend.onrender.com';
+    return 'https://clean-u8gn.onrender.com';
   }
-  
+
   // For development, use localhost
   return 'http://localhost:8000';
 };
