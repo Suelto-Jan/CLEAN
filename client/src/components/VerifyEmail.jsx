@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import bsuLogo from '../images/BSU LOGO.png';
 import cotLogo from '../images/COT.png';
+import config from '../config';
 
 const VerifyEmailPage = () => {
   const location = useLocation();
@@ -33,7 +34,7 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     if (token) {
-      axios.get(`http://localhost:8000/api/verify-email?token=${token}`)
+      axios.get(`${config.apiUrl}/api/verify-email?token=${token}`)
         .then(response => {
           setMessage(response.data.message);
           setError(null);

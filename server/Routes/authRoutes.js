@@ -11,7 +11,7 @@ const router = express.Router();
 const verifyJWT = (req, res, next) => {
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
   console.log("Token received:", token);  // Log the token for debugging
-  
+
   if (!token) {
     return res.status(403).json({ error: true, message: "Not Authorized" });
   }
@@ -48,8 +48,8 @@ router.get("/login/failed", (req, res) => {
 });
 
 // Google login callback route
-router.get('/google/callback', passport.authenticate('google', {  
-  failureRedirect: 'http://localhost:3000/register', // Redirect on failure
+router.get('/google/callback', passport.authenticate('google', {
+  failureRedirect: `${process.env.CLIENT_URL}/register`, // Redirect on failure
 }), async (req, res) => {
   try {
     // Generate a JWT token upon successful login
@@ -61,7 +61,7 @@ router.get('/google/callback', passport.authenticate('google', {
 
     // Set the token as a cookie or send it in the response header
     res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour cookie
-    res.redirect(`${process.env.VITE_CLIENT_URL || 'http://localhost:3000'}/login-selection`);
+    res.redirect(`${process.env.CLIENT_URL}/login-selection`);
   } catch (error) {
     console.error('Error during token generation:', error);
     res.status(500).json({ error: true, message: 'Internal Server Error' });
@@ -78,7 +78,7 @@ router.get("/logout", (req, res) => {
       return res.status(500).json({ error: true, message: "Logout Error" });
     }
     res.clearCookie('token');  // Clear the token cookie on logout
-    res.redirect(process.env.VITE_CLIENT_URL || 'http://localhost:3000');  // Redirect to client URL or fallback
+    res.redirect(process.env.CLIENT_URL);  // Redirect to client URL
   });
 });
 
