@@ -337,67 +337,132 @@ function LoginSelectionPage() {
             boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
           }}
         >
-          <Typography variant="h6" style={{ marginBottom: "20px", fontWeight: "600" }}>
-            Enter PIN for {selectedUser?.firstname}
-          </Typography>
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => {
-              // Only allow numeric input
-              const numericValue = e.target.value.replace(/\D/g, '');
-              // Limit to 6 digits
-              if (numericValue.length <= 6) {
-                setPin(numericValue);
-              }
-            }}
-            placeholder="Enter your 6-digit PIN"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength="6"
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "2px solid #e0e0e0",
-              marginBottom: "15px",
-              fontSize: "16px",
-              textAlign: "center",
-              letterSpacing: "4px",
-            }}
-          />
-          {error && (
-            <Typography color="error" style={{ marginBottom: "15px" }}>
-              {error}
-            </Typography>
+          {!isForgotPin ? (
+            <>
+              <Typography variant="h6" style={{ marginBottom: "20px", fontWeight: "600" }}>
+                Enter PIN for {selectedUser?.firstname}
+              </Typography>
+              <input
+                type="password"
+                value={pin}
+                onChange={(e) => {
+                  // Only allow numeric input
+                  const numericValue = e.target.value.replace(/\D/g, '');
+                  // Limit to 6 digits
+                  if (numericValue.length <= 6) {
+                    setPin(numericValue);
+                  }
+                }}
+                placeholder="Enter your 6-digit PIN"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength="6"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "2px solid #e0e0e0",
+                  marginBottom: "15px",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  letterSpacing: "4px",
+                }}
+              />
+              {error && (
+                <Typography color="error" style={{ marginBottom: "15px" }}>
+                  {error}
+                </Typography>
+              )}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  onClick={closeModal}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                    backgroundColor: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePinSubmit}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "#1a2a6c",
+                    color: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  Login
+                </button>
+              </div>
+              <button
+                onClick={() => setIsForgotPin(true)}
+                className={styles.forgotPinButton}
+              >
+                Forgot PIN?
+              </button>
+            </>
+          ) : (
+            <>
+              <Typography variant="h6" style={{ marginBottom: "20px", fontWeight: "600" }}>
+                Forgot PIN for {selectedUser?.firstname}
+              </Typography>
+              <Typography style={{ marginBottom: "15px", fontSize: "14px" }}>
+                Please enter your email address to receive a PIN reset link.
+              </Typography>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "2px solid #e0e0e0",
+                  marginBottom: "15px",
+                  fontSize: "16px",
+                }}
+              />
+              {resetError && (
+                <Typography color="error" style={{ marginBottom: "15px" }}>
+                  {resetError}
+                </Typography>
+              )}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setIsForgotPin(false)}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                    backgroundColor: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleForgotPin}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "#1a2a6c",
+                    color: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  Reset PIN
+                </button>
+              </div>
+            </>
           )}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button
-              onClick={closeModal}
-              style={{
-                padding: "10px 20px",
-                borderRadius: "8px",
-                border: "1px solid #e0e0e0",
-                backgroundColor: "white",
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handlePinSubmit}
-              style={{
-                padding: "10px 20px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: "#1a2a6c",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              Login
-            </button>
-          </div>
         </motion.div>
       </Modal>
 

@@ -24,27 +24,30 @@ const ResetPinPage = () => {
       setLoading(true);
       setError(null); // Reset error state on a new request
 
+      console.log('Attempting to reset PIN with token:', token);
+
       const res = await fetch(`${config.apiUrl}/api/reset-pin/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPin: '123456' }),
+        body: JSON.stringify({ token }),
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to reset the PIN.');
-      }
 
       const data = await res.json();
       console.log('Response:', data); // Debug response
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset the PIN.');
+      }
 
       setSuccessMessage('Your PIN has been successfully reset. Your new PIN is 123456.');
 
       // Redirect after a short delay
       setTimeout(() => {
-        navigate('/login-selection'); // Redirect to LoginSelectionPage
+        navigate('/login-selection?pinReset=true'); // Redirect to LoginSelectionPage with success parameter
       }, 2000);
 
     } catch (error) {
+      console.error('Error resetting PIN:', error);
       setError(error.message || 'Error occurred while resetting PIN.');
     } finally {
       setLoading(false);

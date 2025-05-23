@@ -508,7 +508,7 @@ export const forgotPin = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Reset Your PIN',
-      text: `Click on the following link to reset your PIN: ${process.env.API_URL}/api/reset-pin/${resetToken}`,
+      text: `Click on the following link to reset your PIN: ${process.env.CLIENT_URL}/reset-pin/${resetToken}`,
     };
 
     transporter.sendMail(mailOptions, (err, info) => {
@@ -527,16 +527,26 @@ export const forgotPin = async (req, res) => {
 
 
 export const resetPin = async (req, res) => {
-  const { token } = req.body;
+  // Get token from either URL parameter or request body
+  const token = req.params.token || req.body.token;
+
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
 
   try {
+    console.log('Attempting to reset PIN with token:', token);
+
     // Verify the reset token
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const user = await UserModel.findOne({ email: decoded.email });
 
     if (!user) {
+      console.log('No user found for email:', decoded.email);
       return res.status(400).json({ error: 'Invalid token or user not found' });
     }
+
+    console.log('User found:', user.email);
 
     // Set the PIN to the default value (123456)
     const defaultPin = '123456';
@@ -546,9 +556,19 @@ export const resetPin = async (req, res) => {
     user.pin = hashedPin;
     await user.save();
 
+    console.log('PIN reset successful for user:', user.email);
     res.status(200).json({ message: 'PIN reset successful' });
   } catch (err) {
-    console.error(err);
+    console.error('Error resetting PIN:', err);
+
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(400).json({ error: 'Invalid token' });
+    }
+
+    if (err.name === 'TokenExpiredError') {
+      return res.status(400).json({ error: 'Token has expired' });
+    }
+
     res.status(500).json({ error: 'Server error' });
   }
 };
