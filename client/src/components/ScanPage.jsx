@@ -178,13 +178,18 @@ function ScanPage() {
       // Add product to cart with quantity 1
       addToCart(product);
 
-      // Show success message
-      setSnackbarMessage(`${product.name} added to cart!`);
+      // Show enhanced success message with price
+      setSnackbarMessage(`${product.name} (₱${product.price.toFixed(2)}) added to cart!`);
       setSnackbarOpen(true);
       setError('');
     } catch (error) {
       console.error('Error fetching product:', error);
-      setError(error.message || 'Failed to fetch product details. Please try again.');
+      const errorMessage = error.message || 'Failed to fetch product details. Please try again.';
+      setError(errorMessage);
+
+      // Show error in snackbar
+      setSnackbarMessage(`Error: ${errorMessage}`);
+      setSnackbarOpen(true);
     } finally {
       setBarcode('');
       setShowScanner(false);
@@ -313,13 +318,23 @@ function ScanPage() {
       setPayLaterItems((prev) => prev.filter((i) => i._id !== selectedPayLaterItem._id));
       setPaidItems((prev) => [...prev, selectedPayLaterItem]);
 
+      // Close the modal
       setShowPaymentModal(false);
+
+      // Store the item name for the success message
+      const itemName = selectedPayLaterItem.name;
+      const itemPrice = selectedPayLaterItem.price.toFixed(2);
+
+      // Reset the selected item
       setSelectedPayLaterItem(null);
-      setSnackbarMessage('Payment confirmed successfully!');
+
+      // Show success message with item details
+      setSnackbarMessage(`Payment successful! ₱${itemPrice} paid for ${itemName}`);
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error confirming payment:', error.message);
-      alert(`Error: ${error.message}`);
+      setSnackbarMessage(`Error: ${error.message}`);
+      setSnackbarOpen(true);
     }
   };
 
@@ -1031,19 +1046,51 @@ function ScanPage() {
         </Box>
       </Modal>
 
-      {/* Snackbar */}
+      {/* Enhanced Snackbar */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={3000}
+        autoHideDuration={4000}
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}
-          severity="success"
+          severity={snackbarMessage.includes('Error') ? "error" : "success"}
+          icon={snackbarMessage.includes('Payment successful') ? <FaCheckCircle /> : undefined}
+          variant="filled"
           sx={{
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+            minWidth: "300px",
+            padding: "16px 24px",
+            "& .MuiAlert-icon": {
+              fontSize: "24px",
+              marginRight: "16px",
+            },
+            "& .MuiAlert-message": {
+              fontSize: "16px",
+              fontWeight: "500",
+            },
+            "& .MuiAlert-action": {
+              paddingTop: "8px",
+            },
+            ...(snackbarMessage.includes('Payment successful') && {
+              background: "linear-gradient(135deg, #2ecc71, #27ae60)",
+            }),
+            ...(snackbarMessage.includes('Error') && {
+              background: "linear-gradient(135deg, #e74c3c, #c0392b)",
+            }),
+            animation: "slideUp 0.5s ease-out forwards",
+            "@keyframes slideUp": {
+              "0%": {
+                opacity: 0,
+                transform: "translateY(20px)",
+              },
+              "100%": {
+                opacity: 1,
+                transform: "translateY(0)",
+              },
+            },
           }}
         >
           {snackbarMessage}
