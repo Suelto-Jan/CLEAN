@@ -34,8 +34,18 @@ function ThankYou() {
 
   const baseURL = config.apiUrl;
   // Retrieve purchase details from location.state or fallback to localStorage
-  const { product, cartItems, quantity, totalPrice, paymentMethod, user, isMultipleProducts, receiptUrl } =
-    location.state || JSON.parse(localStorage.getItem('lastPurchase')) || {};
+  const {
+    product,
+    cartItems,
+    quantity,
+    totalPrice,
+    paymentMethod,
+    user,
+    isMultipleProducts,
+    receiptUrl,
+    receiptStatus,
+    emailSent
+  } = location.state || JSON.parse(localStorage.getItem('lastPurchase')) || {};
 
   useEffect(() => {
     // If state is missing, check localStorage for fallback data
@@ -57,11 +67,13 @@ function ThankYou() {
           paymentMethod,
           user,
           isMultipleProducts,
-          receiptUrl
+          receiptUrl,
+          receiptStatus,
+          emailSent
         })
       );
     }
-  }, [product, cartItems, user, quantity, totalPrice, paymentMethod, isMultipleProducts, receiptUrl, navigate]);
+  }, [product, cartItems, user, quantity, totalPrice, paymentMethod, isMultipleProducts, receiptUrl, receiptStatus, emailSent, navigate]);
 
   // Logout function
   const handleLogout = () => {
@@ -427,24 +439,72 @@ function ThankYou() {
               </Box>
             )}
 
-            {/* Receipt Link */}
-            {receiptUrl && (
-              <Box sx={{ textAlign: "center", mb: 3 }}>
-                <Button
-                  variant="outlined"
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    borderRadius: "12px",
-                    textTransform: "none",
-                    padding: "8px 16px",
-                  }}
-                >
-                  View Receipt PDF
-                </Button>
-              </Box>
-            )}
+            {/* Receipt Section */}
+            <Box sx={{ mb: 3 }}>
+              {receiptUrl ? (
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography variant="body1" sx={{ mb: 2, textAlign: "center", color: "success.main" }}>
+                    Your receipt has been generated and sent to your email.
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    href={receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      padding: "8px 16px",
+                    }}
+                  >
+                    View Receipt PDF
+                  </Button>
+                </Box>
+              ) : receiptStatus === 'email_only' ? (
+                <Box sx={{
+                  p: 2,
+                  backgroundColor: "rgba(37, 99, 235, 0.1)",
+                  borderRadius: "12px",
+                  textAlign: "center"
+                }}>
+                  <Typography variant="body1" sx={{ mb: 1, fontWeight: "500", color: "primary.main" }}>
+                    Your receipt has been sent to your email.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Please check your inbox for the receipt details.
+                  </Typography>
+                </Box>
+              ) : receiptStatus === 'failed' || receiptStatus === 'error' ? (
+                <Box sx={{
+                  p: 2,
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  borderRadius: "12px",
+                  textAlign: "center"
+                }}>
+                  <Typography variant="body1" sx={{ mb: 1, fontWeight: "500", color: "error.main" }}>
+                    We encountered an issue generating your receipt.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Your payment was processed successfully, but the receipt could not be generated.
+                    Please contact support if you need a receipt for this transaction.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{
+                  p: 2,
+                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                  borderRadius: "12px",
+                  textAlign: "center"
+                }}>
+                  <Typography variant="body1" sx={{ mb: 1, fontWeight: "500", color: "success.main" }}>
+                    Your transaction was completed successfully.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Thank you for your purchase!
+                  </Typography>
+                </Box>
+              )}
+            </Box>
 
             <Divider sx={{ my: 3 }} />
 

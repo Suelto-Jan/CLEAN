@@ -172,23 +172,55 @@ const getGoogleDriveFileUrl = (fileId) => {
 
 // Helper function to upload the file to Google Drive
 const uploadToGoogleDrive = async (filePath) => {
-  const fileMetadata = {
-    name: path.basename(filePath),
-    parents: [process.env.GOOGLE_DRIVE_FOLDER_ID], // Set folder ID if needed
-  };
+  try {
+    // First try with the specified folder ID
+    const fileMetadata = {
+      name: path.basename(filePath),
+      parents: process.env.GOOGLE_DRIVE_FOLDER_ID ? [process.env.GOOGLE_DRIVE_FOLDER_ID] : undefined,
+    };
 
-  const media = {
-    mimeType: 'application/pdf',
-    body: fs.createReadStream(filePath),
-  };
+    const media = {
+      mimeType: 'application/pdf',
+      body: fs.createReadStream(filePath),
+    };
 
-  const driveResponse = await drive.files.create({
-    resource: fileMetadata,
-    media: media,
-    fields: 'id',
-  });
+    const driveResponse = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id',
+    });
 
-  return driveResponse.data.id; // Returns the file ID in Google Drive
+    return driveResponse.data.id; // Returns the file ID in Google Drive
+  } catch (error) {
+    console.error('Error uploading to Google Drive with folder ID:', error);
+
+    // If there's an error with the folder ID, try uploading to the root folder
+    if (error.message.includes('insufficientParentPermissions') ||
+        error.message.includes('Insufficient permissions')) {
+      console.log('Attempting to upload to root folder instead...');
+
+      const fileMetadata = {
+        name: path.basename(filePath),
+        // No parents specified - will upload to root of the drive
+      };
+
+      const media = {
+        mimeType: 'application/pdf',
+        body: fs.createReadStream(filePath),
+      };
+
+      const driveResponse = await drive.files.create({
+        resource: fileMetadata,
+        media: media,
+        fields: 'id',
+      });
+
+      return driveResponse.data.id;
+    }
+
+    // If it's another type of error, rethrow it
+    throw error;
+  }
 };
 
 // Receipt Controller
@@ -240,26 +272,63 @@ const createReceipt = async (req, res) => {
   try {
     // Generate PDF receipt
     const filePathPDF = await generatePDFReceipt(receiptData);
+    console.log('PDF receipt generated at:', filePathPDF);
 
     // Send email with styled HTML content and PDF attachment
     await sendEmailWithAttachment(user.email, filePathPDF, receiptData);
+    console.log('Email sent successfully to:', user.email);
 
-    // Upload receipt to Google Drive
-    const driveFileId = await uploadToGoogleDrive(filePathPDF);
+    let driveFileId = null;
+    let fileUrl = null;
 
-    const fileUrl = getGoogleDriveFileUrl(driveFileId);
+    try {
+      // Try to upload receipt to Google Drive
+      driveFileId = await uploadToGoogleDrive(filePathPDF);
+      fileUrl = getGoogleDriveFileUrl(driveFileId);
+      console.log('Receipt uploaded to Google Drive, file ID:', driveFileId);
+    } catch (driveError) {
+      console.error('Google Drive upload failed:', driveError);
+      // Continue without Google Drive upload - we'll still return success since the email was sent
+    }
 
     // Clean up the file after upload and email
-    fs.unlinkSync(filePathPDF);
+    try {
+      fs.unlinkSync(filePathPDF);
+      console.log('Temporary PDF file deleted');
+    } catch (unlinkError) {
+      console.error('Error deleting temporary file:', unlinkError);
+      // Non-critical error, continue
+    }
 
+    // If Google Drive upload failed but email was sent, we still consider it a success
+    if (!driveFileId) {
+      return res.status(200).send({
+        message: 'Receipt generated and emailed successfully, but Google Drive upload failed.',
+        emailSent: true,
+        driveUpload: false
+      });
+    }
+
+    // Full success response
     res.status(200).send({
       message: 'Receipt generated, emailed, and uploaded to Google Drive.',
       driveFileId: driveFileId,
       fileUrl: fileUrl,
+      emailSent: true,
+      driveUpload: true
     });
   } catch (error) {
     console.error('Error creating receipt:', error);
-    res.status(500).send({ message: 'Failed to create and send receipt.' });
+
+    // Provide more detailed error information
+    const errorMessage = error.message || 'Failed to create and send receipt.';
+    const errorDetails = error.stack || '';
+
+    res.status(500).send({
+      message: errorMessage,
+      details: errorDetails,
+      error: error.toString()
+    });
   }
 };
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {Layout,Card,Typography,Button,InputNumber,Radio,Modal,Image,Divider,Space, Row,Col,message,Spin} from 'antd';
-import {ShoppingCartOutlined,DollarCircleOutlined,LeftOutlined, ExclamationCircleOutlined,} from '@ant-design/icons';
+import {ShoppingCartOutlined,DollarCircleOutlined,LeftOutlined, ExclamationCircleOutlined} from '@ant-design/icons';
+import { FaPlus, FaMinus } from 'react-icons/fa';
 import config from '../config';
 
 const { Content } = Layout;
@@ -10,7 +11,8 @@ const { Content } = Layout;
 function PaymentPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { productads, cart } = location.state || {};
+  // Extract state from location
+  const locationState = location.state || {};
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
@@ -347,59 +349,147 @@ function PaymentPage() {
             };
           }
 
-          const response = await fetch(`${config.apiUrl}/api/generate-receipt`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(receiptData),
-          });
+          try {
+            const response = await fetch(`${config.apiUrl}/api/generate-receipt`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(receiptData),
+            });
 
-          if (response.ok) {
             const data = await response.json();
-            console.log('Receipt generated and uploaded:', data);
+            console.log('Receipt API response:', data);
 
-            // Prepare state data for the Thank You page
-            let thankYouState;
+            if (response.ok) {
+              // Prepare state data for the Thank You page
+              let thankYouState;
 
-            if (cartItems && cartItems.length > 0) {
-              // For multiple products
-              thankYouState = {
-                cartItems,
-                totalPrice: cartItems.reduce(
-                  (total, item) => total + (item.product.price * item.quantity),
-                  0
-                ),
-                receiptUrl: data.fileUrl,
-                paymentMethod,
-                user: {
-                  firstname: user.firstname,
-                  lastname: user.lastname,
-                },
-                isMultipleProducts: true
-              };
+              // Set receipt URL if available, otherwise set to null
+              const receiptUrl = data.fileUrl || null;
+
+              if (cartItems && cartItems.length > 0) {
+                // For multiple products
+                thankYouState = {
+                  cartItems,
+                  totalPrice: cartItems.reduce(
+                    (total, item) => total + (item.product.price * item.quantity),
+                    0
+                  ),
+                  receiptUrl: receiptUrl,
+                  receiptStatus: data.driveUpload ? 'uploaded' : 'email_only',
+                  emailSent: data.emailSent,
+                  paymentMethod,
+                  user: {
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    email: user.email
+                  },
+                  isMultipleProducts: true
+                };
+              } else {
+                // For a single product
+                thankYouState = {
+                  product,
+                  quantity,
+                  totalPrice: product.price * quantity,
+                  receiptUrl: receiptUrl,
+                  receiptStatus: data.driveUpload ? 'uploaded' : 'email_only',
+                  emailSent: data.emailSent,
+                  paymentMethod,
+                  user: {
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    email: user.email
+                  },
+                  isMultipleProducts: false
+                };
+              }
+
+              // Show success message
+              message.success('Payment processed successfully!');
+
+              // Redirect to Thank You page with transaction details
+              navigate('/thank-you', { state: thankYouState });
             } else {
-              // For a single product
-              thankYouState = {
-                product,
-                quantity,
-                totalPrice: product.price * quantity,
-                receiptUrl: data.fileUrl,
-                paymentMethod,
-                user: {
-                  firstname: user.firstname,
-                  lastname: user.lastname,
-                },
-                isMultipleProducts: false
-              };
-            }
+              // Handle error response
+              console.error('Error generating receipt:', data);
 
-            // Redirect to Thank You page with transaction details
+              // Show error message but still proceed to thank you page
+              message.warning('Payment processed, but receipt generation had issues. Check your email later.');
+
+              // Create thank you state without receipt URL
+              let thankYouState = cartItems && cartItems.length > 0
+                ? {
+                    cartItems,
+                    totalPrice: cartItems.reduce(
+                      (total, item) => total + (item.product.price * item.quantity),
+                      0
+                    ),
+                    receiptUrl: null,
+                    receiptStatus: 'failed',
+                    paymentMethod,
+                    user: {
+                      firstname: user.firstname,
+                      lastname: user.lastname,
+                      email: user.email
+                    },
+                    isMultipleProducts: true
+                  }
+                : {
+                    product,
+                    quantity,
+                    totalPrice: product.price * quantity,
+                    receiptUrl: null,
+                    receiptStatus: 'failed',
+                    paymentMethod,
+                    user: {
+                      firstname: user.firstname,
+                      lastname: user.lastname,
+                      email: user.email
+                    },
+                    isMultipleProducts: false
+                  };
+
+              // Still navigate to thank you page
+              navigate('/thank-you', { state: thankYouState });
+            }
+          } catch (error) {
+            console.error('Error in receipt generation:', error);
+            message.error('Payment processed, but there was an error generating the receipt.');
+
+            // Navigate to thank you page without receipt
+            const thankYouState = cartItems && cartItems.length > 0
+              ? {
+                  cartItems,
+                  totalPrice: cartItems.reduce(
+                    (total, item) => total + (item.product.price * item.quantity),
+                    0
+                  ),
+                  receiptUrl: null,
+                  receiptStatus: 'error',
+                  paymentMethod,
+                  user: {
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                  },
+                  isMultipleProducts: true
+                }
+              : {
+                  product,
+                  quantity,
+                  totalPrice: product.price * quantity,
+                  receiptUrl: null,
+                  receiptStatus: 'error',
+                  paymentMethod,
+                  user: {
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                  },
+                  isMultipleProducts: false
+                };
+
             navigate('/thank-you', { state: thankYouState });
-          } else {
-            const errorData = await response.json();
-            console.error('Error:', errorData.errors);
-            alert('Failed to generate receipt');
           }
         }
       }
@@ -555,36 +645,56 @@ function PaymentPage() {
                   </div>
 
                   <div style={{
-                    maxHeight: '300px',
+                    maxHeight: '350px',
                     overflowY: 'auto',
                     padding: '16px',
-                    background: '#f9f9f9'
+                    background: 'rgba(249, 249, 249, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '0 0 10px 10px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#1a2a6c #f9f9f9',
                   }}>
                     {cartItems.map((item, index) => (
                       <div
                         key={index}
                         style={{
-                          marginBottom: '12px',
+                          marginBottom: '16px',
                           background: 'white',
-                          borderRadius: '8px',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                           overflow: 'hidden',
                           transition: 'all 0.3s ease',
-                          border: '1px solid #eee',
+                          border: '1px solid rgba(234, 234, 234, 0.8)',
+                          position: 'relative',
                         }}
                       >
                         <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          backgroundColor: '#1a2a6c',
+                          color: 'white',
+                          borderRadius: '20px',
+                          padding: '2px 8px',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          zIndex: 1,
+                        }}>
+                          {item.quantity}
+                        </div>
+                        <div style={{
                           display: 'flex',
                           alignItems: 'center',
-                          padding: '12px'
+                          padding: '16px',
                         }}>
                           <div style={{
-                            width: '70px',
-                            height: '70px',
+                            width: '80px',
+                            height: '80px',
                             marginRight: '16px',
-                            borderRadius: '8px',
+                            borderRadius: '10px',
                             overflow: 'hidden',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                            border: '2px solid white',
                           }}>
                             <Image
                               src={item.product.image ? (item.product.image.startsWith('http') ? item.product.image : `${baseURL}/${item.product.image?.replace(/\\/g, '/')}`) : ''}
@@ -592,32 +702,46 @@ function PaymentPage() {
                               style={{
                                 width: '100%',
                                 height: '100%',
-                                objectFit: 'cover'
+                                objectFit: 'cover',
+                                transition: 'transform 0.3s ease',
                               }}
                               preview={false}
+                              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             />
                           </div>
                           <div style={{ flex: 1 }}>
                             <Typography.Text style={{
                               fontWeight: 'bold',
                               display: 'block',
-                              fontSize: '16px',
-                              color: '#1a2a6c'
+                              fontSize: '17px',
+                              color: '#1a2a6c',
+                              marginBottom: '6px',
                             }}>
                               {item.product.name}
                             </Typography.Text>
                             <div style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              marginTop: '4px'
+                              alignItems: 'center',
+                              marginTop: '8px',
                             }}>
-                              <Typography.Text style={{ fontSize: '14px', color: '#555' }}>
-                                {item.quantity} x ₱{item.product.price.toFixed(2)}
+                              <Typography.Text style={{
+                                fontSize: '14px',
+                                color: '#666',
+                                backgroundColor: 'rgba(26, 42, 108, 0.08)',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                              }}>
+                                ₱{item.product.price.toFixed(2)} each
                               </Typography.Text>
                               <Typography.Text style={{
-                                fontSize: '15px',
+                                fontSize: '18px',
                                 fontWeight: 'bold',
-                                color: '#b21f1f'
+                                color: '#b21f1f',
+                                background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
                               }}>
                                 ₱{(item.product.price * item.quantity).toFixed(2)}
                               </Typography.Text>
@@ -629,37 +753,88 @@ function PaymentPage() {
                   </div>
 
                   <div style={{
-                    background: 'linear-gradient(to right, #f9f9f9, white)',
-                    padding: '16px',
+                    background: 'linear-gradient(to right, rgba(26, 42, 108, 0.05), rgba(178, 31, 31, 0.05))',
+                    padding: '20px',
                     borderBottomLeftRadius: '10px',
                     borderBottomRightRadius: '10px',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                    boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.05)',
+                    borderTop: '1px solid rgba(0,0,0,0.05)',
                   }}>
                     <div style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      background: 'white',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      flexDirection: 'column',
+                      gap: '10px',
                     }}>
-                      <Typography.Text style={{
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                        color: '#333'
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        borderBottom: '1px dashed rgba(0,0,0,0.1)',
                       }}>
-                        Total:
-                      </Typography.Text>
-                      <Typography.Text style={{
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
+                        <Typography.Text style={{
+                          fontSize: '15px',
+                          color: '#666',
+                        }}>
+                          Subtotal:
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          fontSize: '15px',
+                          color: '#333',
+                        }}>
+                          ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
+                        </Typography.Text>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        borderBottom: '1px dashed rgba(0,0,0,0.1)',
                       }}>
-                        ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
-                      </Typography.Text>
+                        <Typography.Text style={{
+                          fontSize: '15px',
+                          color: '#666',
+                        }}>
+                          Items:
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          fontSize: '15px',
+                          color: '#333',
+                        }}>
+                          {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                        </Typography.Text>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 16px',
+                        background: 'white',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        marginTop: '8px',
+                      }}>
+                        <Typography.Text style={{
+                          fontSize: '18px',
+                          fontWeight: 'bold',
+                          color: '#333',
+                        }}>
+                          Total:
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          fontSize: '24px',
+                          fontWeight: 'bold',
+                          background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        }}>
+                          ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
+                        </Typography.Text>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -689,56 +864,256 @@ function PaymentPage() {
               }}
             >
               <div>
-                <Typography.Title
-                  level={4}
-                  style={{ color: '#333', textAlign: 'center', marginBottom: '16px' }}
-                >
-                  Payment Details
-                </Typography.Title>
-                <Divider />
+                <div style={{
+                  background: 'linear-gradient(135deg, #1a2a6c, #b21f1f)',
+                  padding: '20px',
+                  borderRadius: '10px 10px 0 0',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                }}>
+                  <Typography.Title
+                    level={4}
+                    style={{
+                      color: 'white',
+                      margin: 0,
+                      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    Payment Details
+                  </Typography.Title>
+                </div>
+
                 {product && (
-                  <>
-                    <Typography.Text>Quantity:</Typography.Text>
-                    <InputNumber
-                      min={1}
-                      max={product?.quantity || 1}
-                      value={quantity}
-                      onChange={setQuantity}
-                      style={{
-                        width: '100%',
-                        marginBottom: '16px',
-                      }}
-                    />
-                  </>
+                  <div style={{
+                    background: 'rgba(26, 42, 108, 0.05)',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    marginBottom: '20px',
+                  }}>
+                    <Typography.Text style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontWeight: '500',
+                      color: '#1a2a6c',
+                    }}>
+                      Select Quantity:
+                    </Typography.Text>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}>
+                      <Button
+                        icon={<FaMinus />}
+                        onClick={() => quantity > 1 && setQuantity(quantity - 1)}
+                        disabled={quantity <= 1}
+                        style={{
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      />
+                      <InputNumber
+                        min={1}
+                        max={product?.quantity || 1}
+                        value={quantity}
+                        onChange={setQuantity}
+                        style={{
+                          width: '100%',
+                          borderRadius: '8px',
+                        }}
+                        controls={false}
+                      />
+                      <Button
+                        icon={<FaPlus />}
+                        onClick={() => quantity < (product?.quantity || 1) && setQuantity(quantity + 1)}
+                        disabled={quantity >= (product?.quantity || 1)}
+                        style={{
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      />
+                    </div>
+                    <Typography.Text style={{
+                      display: 'block',
+                      marginTop: '8px',
+                      fontSize: '12px',
+                      color: quantity >= (product?.quantity || 1) ? '#f44336' : '#888',
+                    }}>
+                      {quantity >= (product?.quantity || 1)
+                        ? 'Maximum available quantity selected'
+                        : `Available: ${product?.quantity || 1}`}
+                    </Typography.Text>
+                  </div>
                 )}
-                <Typography.Text>Choose Payment Method:</Typography.Text>
-                <Radio.Group
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  value={paymentMethod}
-                  style={{ display: 'block', marginBottom: '16px' }}
-                >
-                  <Radio value="Cash">
-                    <DollarCircleOutlined style={{ color: '#4caf50', marginRight: 10 }} />
-                    Cash
-                  </Radio>
-                  <Radio value="Pay Later">
-                    <ShoppingCartOutlined style={{ color: '#f44336', marginRight: 8 }} />
-                    Pay Later
-                  </Radio>
-                </Radio.Group>
-                <Typography.Text
-                  style={{
+
+                <div style={{
+                  background: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  marginBottom: '20px',
+                }}>
+                  <Typography.Text style={{
+                    display: 'block',
+                    marginBottom: '16px',
+                    fontWeight: '500',
+                    color: '#1a2a6c',
+                    fontSize: '16px',
+                  }}>
+                    Choose Payment Method:
+                  </Typography.Text>
+
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}>
+                    <div
+                      onClick={() => setPaymentMethod('Cash')}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '10px',
+                        border: `2px solid ${paymentMethod === 'Cash' ? '#4caf50' : '#e0e0e0'}`,
+                        background: paymentMethod === 'Cash' ? 'rgba(76, 175, 80, 0.05)' : 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: paymentMethod === 'Cash' ? '#4caf50' : 'rgba(76, 175, 80, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '16px',
+                      }}>
+                        <DollarCircleOutlined style={{
+                          color: paymentMethod === 'Cash' ? 'white' : '#4caf50',
+                          fontSize: '20px'
+                        }} />
+                      </div>
+                      <div>
+                        <Typography.Text style={{
+                          display: 'block',
+                          fontWeight: '500',
+                          color: paymentMethod === 'Cash' ? '#4caf50' : '#333',
+                        }}>
+                          Cash
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          color: '#888',
+                        }}>
+                          Pay now with cash
+                        </Typography.Text>
+                      </div>
+                      <Radio
+                        checked={paymentMethod === 'Cash'}
+                        style={{ marginLeft: 'auto' }}
+                        onChange={() => setPaymentMethod('Cash')}
+                      />
+                    </div>
+
+                    <div
+                      onClick={() => setPaymentMethod('Pay Later')}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '10px',
+                        border: `2px solid ${paymentMethod === 'Pay Later' ? '#f44336' : '#e0e0e0'}`,
+                        background: paymentMethod === 'Pay Later' ? 'rgba(244, 67, 54, 0.05)' : 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: paymentMethod === 'Pay Later' ? '#f44336' : 'rgba(244, 67, 54, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '16px',
+                      }}>
+                        <ShoppingCartOutlined style={{
+                          color: paymentMethod === 'Pay Later' ? 'white' : '#f44336',
+                          fontSize: '20px'
+                        }} />
+                      </div>
+                      <div>
+                        <Typography.Text style={{
+                          display: 'block',
+                          fontWeight: '500',
+                          color: paymentMethod === 'Pay Later' ? '#f44336' : '#333',
+                        }}>
+                          Pay Later
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          color: '#888',
+                        }}>
+                          Pay at a later time
+                        </Typography.Text>
+                      </div>
+                      <Radio
+                        checked={paymentMethod === 'Pay Later'}
+                        style={{ marginLeft: 'auto' }}
+                        onChange={() => setPaymentMethod('Pay Later')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'rgba(26, 42, 108, 0.05)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#1a2a6c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <ExclamationCircleOutlined style={{ color: 'white', fontSize: '14px' }} />
+                  </div>
+                  <Typography.Text style={{
                     fontSize: '12px',
-                    color: '#888',
-                    marginTop: '10px',
-                  }}
-                >
-                  * All payment methods are secure and verified.
-                </Typography.Text>
+                    color: '#666',
+                  }}>
+                    All payment methods are secure and verified. Please review your order before proceeding.
+                  </Typography.Text>
+                </div>
               </div>
-              <Divider />
-              <Typography.Text style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
-                Reminder: Confirm your quantity and payment method before proceeding.
+              <Divider style={{ margin: '20px 0' }} />
+              <Typography.Text style={{
+                fontSize: '13px',
+                color: '#666',
+                textAlign: 'center',
+                display: 'block',
+                marginBottom: '10px',
+              }}>
+                By proceeding, you confirm your order details and payment method.
               </Typography.Text>
               <Button
   type="primary"
@@ -748,18 +1123,51 @@ function PaymentPage() {
   disabled={!paymentMethod || processingPayment}
   loading={processingPayment}
   style={{
-    background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+    background: paymentMethod === 'Cash'
+      ? 'linear-gradient(45deg, #2e7d32, #4caf50)'
+      : paymentMethod === 'Pay Later'
+        ? 'linear-gradient(45deg, #c62828, #f44336)'
+        : 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
     border: 'none',
+    height: '50px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    transition: 'all 0.3s ease',
+  }}
+  onMouseOver={(e) => {
+    if (!processingPayment && paymentMethod) {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+    }
+  }}
+  onMouseOut={(e) => {
+    e.currentTarget.style.transform = 'translateY(0)';
+    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
   }}
 >
-  {processingPayment ? 'Processing...' : (
-    cartItems && cartItems.length > 0 ? (
-      `Pay ₱${cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}`
-    ) : product ? (
-      `Pay ₱${product.price * quantity}`
-    ) : (
-      'Pay'
-    )
+  {processingPayment ? (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+      <span>Processing...</span>
+    </div>
+  ) : (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+      {paymentMethod === 'Cash' ? (
+        <DollarCircleOutlined style={{ fontSize: '20px' }} />
+      ) : paymentMethod === 'Pay Later' ? (
+        <ShoppingCartOutlined style={{ fontSize: '20px' }} />
+      ) : null}
+      <span>
+        {cartItems && cartItems.length > 0 ? (
+          `Pay ₱${cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}`
+        ) : product ? (
+          `Pay ₱${(product.price * quantity).toFixed(2)}`
+        ) : (
+          'Proceed to Payment'
+        )}
+      </span>
+    </div>
   )}
 </Button>
 
@@ -771,71 +1179,364 @@ function PaymentPage() {
       {/* Confirmation Modal */}
       <Modal
         title={
-          <Typography.Text style={{ color: '#4b6cb7' }}>
-            <ExclamationCircleOutlined style={{ marginRight: 8 }} />
-            Confirm Payment
-          </Typography.Text>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '8px 0',
+          }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: paymentMethod === 'Cash'
+                ? 'linear-gradient(45deg, #2e7d32, #4caf50)'
+                : paymentMethod === 'Pay Later'
+                  ? 'linear-gradient(45deg, #c62828, #f44336)'
+                  : 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}>
+              {paymentMethod === 'Cash' ? (
+                <DollarCircleOutlined style={{ color: 'white', fontSize: '20px' }} />
+              ) : paymentMethod === 'Pay Later' ? (
+                <ShoppingCartOutlined style={{ color: 'white', fontSize: '20px' }} />
+              ) : (
+                <ExclamationCircleOutlined style={{ color: 'white', fontSize: '20px' }} />
+              )}
+            </div>
+            <Typography.Title level={4} style={{
+              margin: 0,
+              background: paymentMethod === 'Cash'
+                ? 'linear-gradient(45deg, #2e7d32, #4caf50)'
+                : paymentMethod === 'Pay Later'
+                  ? 'linear-gradient(45deg, #c62828, #f44336)'
+                  : 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Confirm {paymentMethod} Payment
+            </Typography.Title>
+          </div>
         }
         open={isModalOpen}
         onCancel={() => !processingPayment && setIsModalOpen(false)}
         maskClosable={!processingPayment}
         keyboard={!processingPayment}
         closable={!processingPayment}
+        width={500}
+        centered
+        styles={{ body: { padding: '24px' } }}
         footer={[
           <Button
             key="cancel"
             onClick={() => !processingPayment && setIsModalOpen(false)}
             disabled={processingPayment}
+            style={{
+              borderRadius: '8px',
+              height: '40px',
+              fontWeight: '500',
+            }}
           >
             Cancel
           </Button>,
           <Button
-          key="confirm"
-          type="primary"
-          onClick={handleConfirmPayment}
-          loading={processingPayment}
-          disabled={processingPayment}
-          style={{
-            background: 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
-            border: 'none',
-          }}
-        >
-          {processingPayment ? 'Processing...' : 'Confirm'}
-        </Button>
-        ,
+            key="confirm"
+            type="primary"
+            onClick={handleConfirmPayment}
+            loading={processingPayment}
+            disabled={processingPayment}
+            style={{
+              background: paymentMethod === 'Cash'
+                ? 'linear-gradient(45deg, #2e7d32, #4caf50)'
+                : paymentMethod === 'Pay Later'
+                  ? 'linear-gradient(45deg, #c62828, #f44336)'
+                  : 'linear-gradient(45deg, #1a2a6c, #b21f1f)',
+              border: 'none',
+              borderRadius: '8px',
+              height: '40px',
+              fontWeight: '500',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            {processingPayment ? 'Processing...' : 'Confirm Payment'}
+          </Button>
         ]}
       >
         {cartItems && cartItems.length > 0 ? (
           <>
-            <Typography.Text style={{ display: 'block', marginBottom: '10px' }}>
-              You are about to pay for the following items using <strong>{paymentMethod}</strong>:
-            </Typography.Text>
+            <div style={{
+              background: 'rgba(26, 42, 108, 0.05)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+            }}>
+              <Typography.Text style={{
+                display: 'block',
+                marginBottom: '16px',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: '#333',
+              }}>
+                You are about to pay for the following items using <span style={{
+                  color: paymentMethod === 'Cash' ? '#2e7d32' : '#c62828',
+                  fontWeight: 'bold',
+                }}>{paymentMethod}</span>:
+              </Typography.Text>
 
-            {cartItems.map((item, index) => (
-              <div key={index} style={{ marginBottom: '8px', padding: '8px', background: '#f9f9f9', borderRadius: '4px' }}>
-                <Typography.Text style={{ display: 'block' }}>
-                  {item.product.name} - {item.quantity} x ₱{item.product.price} = <strong>₱{(item.product.price * item.quantity).toFixed(2)}</strong>
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                marginBottom: '16px',
+                padding: '4px',
+                borderRadius: '8px',
+              }}>
+                {cartItems.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: '12px',
+                      padding: '12px',
+                      background: 'white',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                    }}>
+                      <Image
+                        src={item.product.image ? (item.product.image.startsWith('http') ? item.product.image : `${baseURL}/${item.product.image?.replace(/\\/g, '/')}`) : ''}
+                        alt={item.product.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                        preview={false}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <Typography.Text style={{
+                        display: 'block',
+                        fontWeight: '500',
+                        color: '#333',
+                      }}>
+                        {item.product.name}
+                      </Typography.Text>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '4px',
+                      }}>
+                        <Typography.Text style={{
+                          fontSize: '13px',
+                          color: '#666',
+                        }}>
+                          {item.quantity} x ₱{item.product.price.toFixed(2)}
+                        </Typography.Text>
+                        <Typography.Text style={{
+                          fontWeight: 'bold',
+                          color: '#1a2a6c',
+                        }}>
+                          ₱{(item.product.price * item.quantity).toFixed(2)}
+                        </Typography.Text>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              marginBottom: '20px',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 0',
+                borderBottom: '1px dashed rgba(0,0,0,0.1)',
+              }}>
+                <Typography.Text style={{ color: '#666' }}>
+                  Subtotal:
+                </Typography.Text>
+                <Typography.Text>
+                  ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
                 </Typography.Text>
               </div>
-            ))}
 
-            <Typography.Text style={{ display: 'block', marginTop: '15px', fontWeight: 'bold' }}>
-              Total: ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
-            </Typography.Text>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                marginTop: '8px',
+              }}>
+                <Typography.Text style={{
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                }}>
+                  Total:
+                </Typography.Text>
+                <Typography.Text style={{
+                  fontWeight: 'bold',
+                  fontSize: '18px',
+                  color: '#1a2a6c',
+                }}>
+                  ₱{cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0).toFixed(2)}
+                </Typography.Text>
+              </div>
+            </div>
 
-            <Typography.Text style={{ display: 'block', marginTop: '15px' }}>
-              Do you want to proceed?
-            </Typography.Text>
+            <div style={{
+              background: paymentMethod === 'Cash'
+                ? 'rgba(76, 175, 80, 0.1)'
+                : 'rgba(244, 67, 54, 0.1)',
+              padding: '12px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: paymentMethod === 'Cash' ? '#4caf50' : '#f44336',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <ExclamationCircleOutlined style={{ color: 'white', fontSize: '14px' }} />
+              </div>
+              <Typography.Text style={{ fontSize: '14px' }}>
+                {paymentMethod === 'Cash'
+                  ? 'You will pay the full amount now.'
+                  : 'You will need to pay this amount later.'}
+              </Typography.Text>
+            </div>
           </>
         ) : product ? (
-          <Typography.Text>
-            You are about to pay <strong>₱{product.price * quantity}</strong> for <strong>{product.name}</strong> using{' '}
-            <strong>{paymentMethod}</strong>. Do you want to proceed?
-          </Typography.Text>
+          <>
+            <div style={{
+              background: 'rgba(26, 42, 108, 0.05)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}>
+                <Image
+                  src={product.image || ''}
+                  alt={product.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                  preview={false}
+                />
+              </div>
+              <div>
+                <Typography.Text style={{
+                  display: 'block',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  color: '#1a2a6c',
+                  marginBottom: '4px',
+                }}>
+                  {product.name}
+                </Typography.Text>
+                <Typography.Text style={{
+                  display: 'block',
+                  color: '#666',
+                  marginBottom: '8px',
+                }}>
+                  Quantity: {quantity}
+                </Typography.Text>
+                <Typography.Text style={{
+                  display: 'block',
+                  fontWeight: 'bold',
+                  fontSize: '18px',
+                  color: '#b21f1f',
+                }}>
+                  ₱{(product.price * quantity).toFixed(2)}
+                </Typography.Text>
+              </div>
+            </div>
+
+            <div style={{
+              background: paymentMethod === 'Cash'
+                ? 'rgba(76, 175, 80, 0.1)'
+                : 'rgba(244, 67, 54, 0.1)',
+              padding: '12px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: paymentMethod === 'Cash' ? '#4caf50' : '#f44336',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <ExclamationCircleOutlined style={{ color: 'white', fontSize: '14px' }} />
+              </div>
+              <Typography.Text style={{ fontSize: '14px' }}>
+                You are about to pay <strong>₱{(product.price * quantity).toFixed(2)}</strong> for <strong>{product.name}</strong> using{' '}
+                <span style={{
+                  color: paymentMethod === 'Cash' ? '#2e7d32' : '#c62828',
+                  fontWeight: 'bold',
+                }}>{paymentMethod}</span>.
+              </Typography.Text>
+            </div>
+          </>
         ) : (
-          <Typography.Text>
-            No product selected. Please go back and select a product.
-          </Typography.Text>
+          <div style={{
+            padding: '20px',
+            textAlign: 'center',
+            background: 'rgba(244, 67, 54, 0.05)',
+            borderRadius: '8px',
+          }}>
+            <ExclamationCircleOutlined style={{ fontSize: '32px', color: '#f44336', marginBottom: '16px' }} />
+            <Typography.Text style={{
+              display: 'block',
+              fontSize: '16px',
+              color: '#f44336',
+            }}>
+              No product selected. Please go back and select a product.
+            </Typography.Text>
+          </div>
         )}
       </Modal>
     </Layout>
